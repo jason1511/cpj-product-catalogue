@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import Container from "../components/Container";
 import ProductGrid from "../components/ProductGrid";
-import SectionHeader from "../components/SectionHeader";
 import { products } from "../data/products";
 import { categories } from "../data/categories";
 import ProductDetailModal from "../components/ProductDetailModal";
@@ -61,7 +60,7 @@ const hasActiveFilters =
   selectedType !== "all" ||
   selectedFeature !== "all" ||
   sortBy !== "default";
-  const filteredProducts = products
+  const filteredProducts = activeProducts
   .filter((product) => {
     const searchText =
       `${product.brand} ${product.model} ${product.description}`
@@ -151,12 +150,7 @@ function formatPrice(price) {
 }
   return (
     <main className="py-10">
-      <Container>
-        <SectionHeader
-          eyebrow="Katalog Produk"
-          title="Pilihan Sepeda & Motor Listrik"
-          description="Jelajahi produk berdasarkan merek, jenis kendaraan, fitur utama, dan kebutuhan penggunaan."
-        />
+      <Container> 
 <section className="relative overflow-hidden rounded-[2rem] bg-slate-950 p-8 shadow-xl lg:p-10">
   <div className="absolute -right-24 top-0 h-72 w-72 rounded-full bg-red-600/30 blur-3xl" />
   <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-red-500/20 blur-3xl" />
