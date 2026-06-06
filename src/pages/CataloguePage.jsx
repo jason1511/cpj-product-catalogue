@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import Container from "../components/Container";
 import ProductGrid from "../components/ProductGrid";
-import { products } from "../data/products";
+import { products as fallbackProducts } from "../data/products";
 import { categories } from "../data/categories";
 import ProductDetailModal from "../components/ProductDetailModal";
 
@@ -18,7 +18,49 @@ function CataloguePage() {
   const [selectedType, setSelectedType] = useState(initialType);
   const [selectedFeature, setSelectedFeature] = useState(initialFeature);
   const [sortBy, setSortBy] = useState("default");
+  const [products, setProducts] = useState(fallbackProducts);
+const [isLoading, setIsLoading] = useState(true);
+const [apiError, setApiError] = useState("");
+useEffect(() => {
+  let isMounted = true;
 
+  async function loadProducts() {
+    try {
+      setIsLoading(true);
+      setApiError("");
+
+      const response = await fetch("/api/products");
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.message || "Gagal mengambil data produk.");
+      }
+
+      if (isMounted) {
+        setProducts(data.products);
+      }
+    } catch (error) {
+      console.error(error);
+
+      if (isMounted) {
+        setApiError(
+          "Data produk dari database belum tersedia. Menampilkan data cadangan.",
+        );
+        setProducts(fallbackProducts);
+      }
+    } finally {
+      if (isMounted) {
+        setIsLoading(false);
+      }
+    }
+  }
+
+  loadProducts();
+
+  return () => {
+    isMounted = false;
+  };
+}, []);
   const typeCategories = categories.filter(
     (category) => category.filterType === "type",
   );
@@ -440,7 +482,17 @@ function formatPrice(price) {
 </div>
 </div>
         </section>
+        {isLoading && (
+  <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm">
+    Memuat data produk dari database...
+  </div>
+)}
 
+{apiError && (
+  <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">
+    {apiError}
+  </div>
+)}
         {filteredProducts.length > 0 ? (
           <ProductGrid
   products={filteredProducts}

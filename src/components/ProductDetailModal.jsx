@@ -41,10 +41,6 @@ function ProductDetailModal({ product, onClose }) {
     label: "Rem",
     value: product?.specs.brake,
   },
-  {
-    label: "Halaman Katalog",
-    value: product?.sourcePage ? `Halaman ${product.sourcePage}` : "-",
-  },
 ];
 
   return (

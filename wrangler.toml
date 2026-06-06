@@ -1,0 +1,8 @@
+name = "cpj-product-catalogue"
+compatibility_date = "2026-05-20"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cpj_catalogue_db"
+database_id = "876766b2-1023-4b79-9de4-85f924500324"

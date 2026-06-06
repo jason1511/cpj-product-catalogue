@@ -11,6 +11,9 @@ import ScrollToTop from "./components/ScrollToTop";
 import FloatingContactButton from "./components/FloatingContactButton";
 import MobileContactBar from "./components/MobileContactBar";
 import NotFoundPage from "./pages/NotFoundPage";
+import AdminPage from "./pages/AdminPage";
+import AdminProductsPage from "./pages/AdminProductsPage";
+import AdminProductEditPage from "./pages/AdminProductEditPage";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -23,6 +26,9 @@ function AnimatedRoutes() {
           <Route path="/catalogue" element={<CataloguePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin/products" element={<AdminProductsPage />} />
+          <Route path="/admin/products/:id/edit" element={<AdminProductEditPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </PageTransition>
