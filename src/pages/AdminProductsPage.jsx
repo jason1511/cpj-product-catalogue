@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Container from "../components/Container";
+import AdminTopBar from "../components/AdminTopBar";
 
 function formatPrice(price) {
   if (!price) return "-";
@@ -53,6 +54,50 @@ function AdminProductsPage() {
     };
   }, []);
 
+  async function toggleProductStatus(product) {
+    const nextStatus = !product.isActive;
+
+    const confirmed = window.confirm(
+      nextStatus
+        ? `Aktifkan produk ${product.brand} ${product.model}?`
+        : `Nonaktifkan produk ${product.brand} ${product.model}? Produk tidak akan tampil di katalog publik.`,
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/admin/products/${product.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          isActive: nextStatus,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.message || "Gagal mengubah status produk.");
+      }
+
+      setProducts((currentProducts) =>
+        currentProducts.map((currentProduct) =>
+          currentProduct.id === product.id
+            ? {
+                ...currentProduct,
+                isActive: nextStatus,
+              }
+            : currentProduct,
+        ),
+      );
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    }
+  }
+
   const filteredProducts = products.filter((product) => {
     const searchText = `${product.brand} ${product.model} ${product.type}`
       .toLowerCase()
@@ -71,6 +116,7 @@ function AdminProductsPage() {
   return (
     <main className="py-10">
       <Container>
+        <AdminTopBar />
         <section className="relative overflow-hidden rounded-[2rem] bg-slate-950 p-8 text-white shadow-xl lg:p-10">
           <div className="absolute -right-24 top-0 h-72 w-72 rounded-full bg-red-600/30 blur-3xl" />
           <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-red-500/15 blur-3xl" />
@@ -87,9 +133,8 @@ function AdminProductsPage() {
               </h1>
 
               <p className="mt-5 max-w-2xl text-base leading-8 text-slate-300">
-                Lihat daftar produk dari database D1. Setelah ini kita akan
-                menambahkan fitur edit, tambah produk, status aktif, dan upload
-                gambar.
+                Lihat daftar produk dari database D1. Produk bisa ditambah,
+                diedit, diaktifkan, atau dinonaktifkan dari halaman admin.
               </p>
             </div>
 
@@ -128,7 +173,7 @@ function AdminProductsPage() {
                 type="search"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Cari merek, model, atau jenis..."
+                placeholder="Cari merek, model, atau penggerak..."
                 className="mt-2 w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-sm font-medium text-slate-800 outline-none transition focus:border-red-400 focus:bg-white focus:ring-4 focus:ring-red-50"
               />
             </div>
@@ -154,12 +199,12 @@ function AdminProductsPage() {
             </div>
 
             <div className="flex items-end">
-              <button
-                type="button"
-                className="w-full rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-slate-950/10 transition hover:-translate-y-0.5 hover:bg-red-600"
+              <Link
+                to="/admin/products/new"
+                className="w-full rounded-xl bg-slate-950 px-5 py-3 text-center text-sm font-bold text-white shadow-lg shadow-slate-950/10 transition hover:-translate-y-0.5 hover:bg-red-600"
               >
                 Tambah Produk
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -197,7 +242,7 @@ function AdminProductsPage() {
                 <thead className="bg-slate-950 text-white">
                   <tr>
                     <th className="px-5 py-4 font-bold">Produk</th>
-                    <th className="px-5 py-4 font-bold">Jenis</th>
+                    <th className="px-5 py-4 font-bold">Penggerak</th>
                     <th className="px-5 py-4 font-bold">Harga</th>
                     <th className="px-5 py-4 font-bold">Featured</th>
                     <th className="px-5 py-4 font-bold">Status</th>
@@ -252,13 +297,27 @@ function AdminProductsPage() {
                         </span>
                       </td>
 
-                      <td className="px-5 py-4 text-right">
-                        <Link
-  to={`/admin/products/${product.id}/edit`}
-  className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:border-red-300 hover:text-red-600"
->
-  Edit
-</Link>
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-2">
+                          <Link
+                            to={`/admin/products/${product.id}/edit`}
+                            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:border-red-300 hover:text-red-600"
+                          >
+                            Edit
+                          </Link>
+
+                          <button
+                            type="button"
+                            onClick={() => toggleProductStatus(product)}
+                            className={
+                              product.isActive
+                                ? "rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-100"
+                                : "rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100"
+                            }
+                          >
+                            {product.isActive ? "Nonaktifkan" : "Aktifkan"}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

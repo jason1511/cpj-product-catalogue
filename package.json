@@ -8,7 +8,7 @@
   "build": "vite build",
   "preview": "vite preview",
   "check": "npm run build",
-  "cf:dev": "npm run build && wrangler pages dev dist --d1 DB=876766b2-1023-4b79-9de4-85f924500324",
+  "cf:dev": "npm run build && wrangler pages dev dist --d1 DB=876766b2-1023-4b79-9de4-85f924500324 --r2 PRODUCT_IMAGES=cpj-product-images",
   "cf:deploy": "npm run build && wrangler pages deploy dist",
   "db:seed:generate": "node scripts/generate-seed-products.js",
   "db:seed:local": "wrangler d1 execute cpj_catalogue_db --local --file=./migrations/0003_seed_products.sql",

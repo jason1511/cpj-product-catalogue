@@ -20,6 +20,7 @@ function mapProductRow(row) {
     description: row.description,
     specs: parseJsonField(row.specs, {}),
     colors: parseJsonField(row.colors, []),
+    colorImages: parseJsonField(row.color_images, {}),
     sourcePage: row.source_page,
     isFeatured: Boolean(row.is_featured),
     isActive: Boolean(row.is_active),
@@ -55,6 +56,7 @@ function normalizeProductPayload(body) {
     description: String(body.description || "").trim(),
     features: JSON.stringify(normalizeTextArray(body.features)),
     colors: JSON.stringify(normalizeTextArray(body.colors)),
+    color_images: JSON.stringify(body.colorImages || {}),
     specs: JSON.stringify({
       battery: String(body.specs?.battery || "").trim(),
       motor: String(body.specs?.motor || "").trim(),
@@ -108,6 +110,7 @@ export async function onRequestGet(context) {
         description,
         specs,
         colors,
+        color_images,
         source_page,
         is_featured,
         is_active,
@@ -199,20 +202,21 @@ export async function onRequestPut(context) {
     await env.DB.prepare(
       `
       UPDATE products
-      SET
-        brand = ?,
-        model = ?,
-        type = ?,
-        features = ?,
-        price = ?,
-        image_url = ?,
-        description = ?,
-        specs = ?,
-        colors = ?,
-        is_featured = ?,
-        is_active = ?,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
+SET
+  brand = ?,
+  model = ?,
+  type = ?,
+  features = ?,
+  price = ?,
+  image_url = ?,
+  description = ?,
+  specs = ?,
+  colors = ?,
+  color_images = ?,
+  is_featured = ?,
+  is_active = ?,
+  updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
       `,
     )
       .bind(
@@ -225,6 +229,7 @@ export async function onRequestPut(context) {
         product.description,
         product.specs,
         product.colors,
+        product.color_images,
         product.is_featured,
         product.is_active,
         id,
@@ -240,6 +245,83 @@ export async function onRequestPut(context) {
       {
         ok: false,
         message: "Gagal memperbarui produk.",
+        error: error.message,
+      },
+      { status: 500 },
+    );
+  }
+}
+export async function onRequestPatch(context) {
+  try {
+    const { env, params, request } = context;
+    const { id } = params;
+
+    if (!env.DB) {
+      return Response.json(
+        {
+          ok: false,
+          message: "D1 binding DB is not available.",
+        },
+        { status: 500 },
+      );
+    }
+
+    const body = await request.json();
+
+    if (typeof body.isActive !== "boolean") {
+      return Response.json(
+        {
+          ok: false,
+          message: "Status aktif harus berupa boolean.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const existingProduct = await env.DB.prepare(
+      `
+      SELECT id
+      FROM products
+      WHERE id = ?
+      LIMIT 1
+      `,
+    )
+      .bind(id)
+      .first();
+
+    if (!existingProduct) {
+      return Response.json(
+        {
+          ok: false,
+          message: "Produk tidak ditemukan.",
+        },
+        { status: 404 },
+      );
+    }
+
+    await env.DB.prepare(
+      `
+      UPDATE products
+      SET
+        is_active = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+      `,
+    )
+      .bind(body.isActive ? 1 : 0, id)
+      .run();
+
+    return Response.json({
+      ok: true,
+      message: body.isActive
+        ? "Produk berhasil diaktifkan."
+        : "Produk berhasil dinonaktifkan.",
+    });
+  } catch (error) {
+    return Response.json(
+      {
+        ok: false,
+        message: "Gagal mengubah status produk.",
         error: error.message,
       },
       { status: 500 },

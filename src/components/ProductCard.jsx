@@ -14,13 +14,13 @@ function ProductCard({ product, onViewDetails }) {
 
   return (
     <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-red-200 hover:shadow-xl">
-      <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-slate-950">
+      <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-white">
   {product.image ? (
     <img
-      src={product.image}
-      alt={`${product.brand} ${product.model}`}
-      className="h-full w-full object-cover"
-    />
+  src={product.image}
+  alt={`${product.brand} ${product.model}`}
+  className="h-full w-full object-contain p-4"
+/>
   ) : (
     <>
       <div className="absolute -right-10 top-4 h-36 w-36 rounded-full bg-red-600/30 blur-3xl" />

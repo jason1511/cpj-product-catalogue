@@ -90,13 +90,13 @@ function ProductDetailModal({ product, onClose }) {
             </div>
 
             <div className="grid gap-6 p-6 lg:grid-cols-[0.9fr_1.1fr]">
-              <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-2xl bg-slate-950">
+              <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-2xl bg-white">
                 {product.image ? (
                   <img
-                    src={product.image}
-                    alt={`${product.brand} ${product.model}`}
-                    className="h-full w-full rounded-2xl object-cover"
-                  />
+  src={product.image}
+  alt={`${product.brand} ${product.model}`}
+  className="h-full w-full rounded-2xl object-cover"
+/>
                 ) : (
                   <>
                     <div className="absolute -right-12 top-6 h-44 w-44 rounded-full bg-red-600/30 blur-3xl" />

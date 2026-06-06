@@ -1,0 +1,1 @@
+ALTER TABLE products ADD COLUMN color_images TEXT DEFAULT '{}';
