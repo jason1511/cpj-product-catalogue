@@ -92,10 +92,13 @@ function Navbar() {
             onClick={closeMenu}
             className="group flex items-center gap-3"
           >
-            <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-slate-950 text-sm font-black text-white shadow-lg">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(239,68,68,0.7),transparent_45%)]" />
-              <span className="relative">CPJ</span>
-            </div>
+            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-lg">
+  <img
+    src="/logo_cpj.png"
+    alt="Logo CV Chandra Putra Jaya"
+    className="h-full w-full object-contain"
+  />
+</div>
 
             <div>
               <p className="text-sm font-black leading-tight text-slate-950">

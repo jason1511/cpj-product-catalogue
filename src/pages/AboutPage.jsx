@@ -1,36 +1,45 @@
 import Container from "../components/Container";
 import SectionHeader from "../components/SectionHeader";
+import SEO from "../components/SEO";
 
 const companyPoints = [
   {
-    title: "Showroom Digital",
+    title: "Kantor Pusat di Surabaya",
     description:
-      "Website ini dibuat sebagai katalog showroom untuk menampilkan pilihan sepeda listrik dan motor listrik secara lebih rapi dan mudah dijelajahi.",
+      "CV Chandra Putra Jaya berpusat di Surabaya dan menyediakan informasi katalog sepeda listrik serta motor listrik untuk pelanggan di beberapa area layanan.",
   },
   {
     title: "Katalog Multi-Merek",
     description:
-      "Produk disusun dari berbagai merek agar pelanggan dapat melihat beberapa pilihan dalam satu tempat.",
+      "Produk disusun dari berbagai merek seperti Exotic, Pacific, Uwinfly, Selis, Saige, Nuv, Larizz, dan lainnya agar pelanggan dapat melihat beberapa pilihan dalam satu tempat.",
   },
   {
     title: "Informasi Produk Awal",
     description:
-      "Pelanggan dapat melihat harga katalog, spesifikasi utama, warna, dan fitur sebelum menghubungi tim kami.",
+      "Pelanggan dapat melihat harga katalog, spesifikasi utama, warna, dan fitur sebelum menghubungi tim kami untuk cek stok dan harga terbaru.",
   },
 ];
 
 const serviceAreas = [
+  "Kantor pusat Surabaya",
+  "Layanan area Lumajang",
+  "Layanan area Lombok",
   "Informasi produk",
   "Cek stok",
   "Cek warna tersedia",
   "Harga terbaru",
   "Rekomendasi model",
-  "Informasi katalog",
 ];
 
 function AboutPage() {
   return (
     <main className="py-10">
+      <SEO
+        title="Tentang Kami"
+        canonicalPath="/about"
+        description="Tentang CV Chandra Putra Jaya, distributor dan showroom sepeda listrik serta motor listrik dengan kantor pusat di Surabaya, melayani area Lumajang dan Lombok."
+      />
+
       <Container>
         <section className="relative overflow-hidden rounded-[2rem] bg-slate-950 p-8 text-white shadow-xl lg:p-10">
           <div className="absolute -right-24 top-0 h-72 w-72 rounded-full bg-red-600/30 blur-3xl" />
@@ -42,7 +51,7 @@ function AboutPage() {
               <SectionHeader
                 eyebrow="Tentang Kami"
                 title="CV Chandra Putra Jaya"
-                description="CV Chandra Putra Jaya menghadirkan katalog showroom sepeda listrik dan motor listrik dari berbagai merek untuk membantu pelanggan melihat pilihan produk dengan lebih mudah."
+                description="CV Chandra Putra Jaya adalah distributor dan showroom kendaraan listrik dengan kantor pusat di Surabaya. Melalui katalog digital ini, pelanggan dapat menjelajahi pilihan sepeda listrik dan motor listrik dari berbagai merek."
                 className="[&_h1]:text-white [&_p:last-child]:text-slate-300"
               />
 
@@ -50,7 +59,9 @@ function AboutPage() {
                 Website ini berfungsi sebagai pusat informasi produk. Pelanggan
                 dapat menjelajahi katalog, melihat detail model, membandingkan
                 fitur utama, lalu menghubungi tim kami untuk menanyakan stok,
-                warna tersedia, dan harga terbaru.
+                warna tersedia, dan harga terbaru. Selain Surabaya, CPJ juga
+                melayani kebutuhan informasi produk untuk area Lumajang dan
+                Lombok.
               </p>
             </div>
 
@@ -65,16 +76,14 @@ function AboutPage() {
 
               <div className="mt-6 grid gap-3">
                 <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
-                  <p className="text-3xl font-black text-white">30+</p>
-                  <p className="mt-1 text-sm text-slate-300">
-                    Pilihan produk katalog
-                  </p>
+                  <p className="text-3xl font-black text-white">Surabaya</p>
+                  <p className="mt-1 text-sm text-slate-300">Kantor pusat</p>
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
-                  <p className="text-3xl font-black text-white">8+</p>
+                  <p className="text-3xl font-black text-white">30+</p>
                   <p className="mt-1 text-sm text-slate-300">
-                    Merek tersedia
+                    Pilihan produk katalog
                   </p>
                 </div>
 
@@ -117,7 +126,7 @@ function AboutPage() {
           <div className="relative grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-red-600">
-                Layanan Informasi
+                Area & Layanan Informasi
               </p>
 
               <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">
@@ -127,7 +136,8 @@ function AboutPage() {
               <p className="mt-4 leading-7 text-slate-600">
                 Katalog ini membantu pelanggan mendapatkan gambaran awal sebelum
                 menghubungi tim CV Chandra Putra Jaya untuk informasi lebih
-                lanjut.
+                lanjut. CPJ berpusat di Surabaya dan melayani informasi produk
+                untuk area Lumajang dan Lombok.
               </p>
             </div>
 
