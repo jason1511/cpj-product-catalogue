@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Container from "../components/Container";
-import AdminTopBar from "../components/AdminTopBar";
 
 function formatPrice(price) {
   if (!price) return "-";
@@ -116,7 +115,6 @@ function AdminProductsPage() {
   return (
     <main className="py-10">
       <Container>
-        <AdminTopBar />
         <section className="relative overflow-hidden rounded-[2rem] bg-slate-950 p-8 text-white shadow-xl lg:p-10">
           <div className="absolute -right-24 top-0 h-72 w-72 rounded-full bg-red-600/30 blur-3xl" />
           <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-red-500/15 blur-3xl" />

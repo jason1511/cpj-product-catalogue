@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import AdminTopBar from "../components/AdminTopBar";
 import Container from "../components/Container";
 
 function AdminUsersPage() {
   const [users, setUsers] = useState([]);
+
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -12,6 +12,10 @@ function AdminUsersPage() {
 
   const [passwordResetUser, setPasswordResetUser] = useState(null);
   const [newPassword, setNewPassword] = useState("");
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -25,10 +29,9 @@ function AdminUsersPage() {
       return JSON.parse(responseText);
     } catch {
       throw new Error(
-        `API tidak mengembalikan JSON. Status: ${response.status}. Response: ${responseText.slice(
-          0,
-          120,
-        )}`,
+        `API tidak mengembalikan JSON. Status: ${
+          response.status
+        }. Response: ${responseText.slice(0, 120)}`,
       );
     }
   }
@@ -184,11 +187,28 @@ function AdminUsersPage() {
     }
   }
 
+  const filteredUsers = users.filter((user) => {
+    const searchText = `${user.username || ""} ${user.role || ""} ${
+      user.id || ""
+    } ${user.isActive ? "aktif active" : "nonaktif inactive"}`
+      .toLowerCase()
+      .trim();
+
+    const matchesSearch = searchText.includes(searchTerm.toLowerCase());
+
+    const matchesRole = roleFilter === "all" || user.role === roleFilter;
+
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "active" && user.isActive) ||
+      (statusFilter === "inactive" && !user.isActive);
+
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
   return (
     <main className="py-10">
       <Container>
-        <AdminTopBar />
-
         <section className="relative overflow-hidden rounded-[2rem] bg-slate-950 p-8 text-white shadow-xl lg:p-10">
           <div className="absolute -right-24 top-0 h-72 w-72 rounded-full bg-red-600/30 blur-3xl" />
           <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-red-500/15 blur-3xl" />
@@ -216,6 +236,82 @@ function AdminUsersPage() {
           </div>
         )}
 
+        <section className="relative mt-8 overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="absolute -right-24 top-0 h-56 w-56 rounded-full bg-red-500/10 blur-3xl" />
+
+          <div className="relative grid gap-4 lg:grid-cols-[1fr_180px_200px]">
+            <div>
+              <label
+                htmlFor="admin-user-search"
+                className="text-sm font-semibold text-slate-700"
+              >
+                Cari user
+              </label>
+
+              <input
+                id="admin-user-search"
+                type="search"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Cari username, role, status, atau ID..."
+                className="mt-2 w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-sm font-medium text-slate-800 outline-none transition focus:border-red-400 focus:bg-white focus:ring-4 focus:ring-red-50"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="admin-user-role"
+                className="text-sm font-semibold text-slate-700"
+              >
+                Role
+              </label>
+
+              <select
+                id="admin-user-role"
+                value={roleFilter}
+                onChange={(event) => setRoleFilter(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-sm font-medium text-slate-800 outline-none transition focus:border-red-400 focus:bg-white focus:ring-4 focus:ring-red-50"
+              >
+                <option value="all">Semua role</option>
+                <option value="admin">Admin</option>
+                <option value="staff">Staff</option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="admin-user-status"
+                className="text-sm font-semibold text-slate-700"
+              >
+                Status
+              </label>
+
+              <select
+                id="admin-user-status"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-sm font-medium text-slate-800 outline-none transition focus:border-red-400 focus:bg-white focus:ring-4 focus:ring-red-50"
+              >
+                <option value="all">Semua status</option>
+                <option value="active">Aktif</option>
+                <option value="inactive">Nonaktif</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="relative mt-5 border-t border-slate-100 pt-4">
+            <p className="text-sm text-slate-600">
+              Menampilkan{" "}
+              <span className="font-bold text-slate-950">
+                {filteredUsers.length}
+              </span>{" "}
+              dari{" "}
+              <span className="font-bold text-slate-950">{users.length}</span>{" "}
+              user
+            </p>
+          </div>
+        </section>
+
         <section className="mt-8 grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
           <form
             onSubmit={handleCreateUser}
@@ -230,6 +326,7 @@ function AdminUsersPage() {
                 <label className="text-sm font-semibold text-slate-700">
                   Username
                 </label>
+
                 <input
                   type="text"
                   value={formData.username}
@@ -245,6 +342,7 @@ function AdminUsersPage() {
                 <label className="text-sm font-semibold text-slate-700">
                   Password
                 </label>
+
                 <input
                   type="password"
                   value={formData.password}
@@ -254,6 +352,7 @@ function AdminUsersPage() {
                   className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50"
                   autoComplete="new-password"
                 />
+
                 <p className="mt-2 text-xs text-slate-500">
                   Minimal 6 karakter.
                 </p>
@@ -263,6 +362,7 @@ function AdminUsersPage() {
                 <label className="text-sm font-semibold text-slate-700">
                   Role
                 </label>
+
                 <select
                   value={formData.role}
                   onChange={(event) => updateField("role", event.target.value)}
@@ -288,8 +388,10 @@ function AdminUsersPage() {
               <h2 className="text-2xl font-black text-slate-950">
                 Daftar User
               </h2>
+
               <p className="mt-2 text-sm text-slate-600">
-                Total {users.length} user terdaftar.
+                Total {filteredUsers.length} dari {users.length} user
+                ditampilkan.
               </p>
             </div>
 
@@ -298,87 +400,102 @@ function AdminUsersPage() {
                 Memuat data user...
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[650px] border-collapse text-left text-sm">
-                  <thead className="bg-slate-950 text-white">
-                    <tr>
-                      <th className="px-5 py-4 font-bold">Username</th>
-                      <th className="px-5 py-4 font-bold">Role</th>
-                      <th className="px-5 py-4 font-bold">Status</th>
-                      <th className="px-5 py-4 text-right font-bold">Aksi</th>
-                    </tr>
-                  </thead>
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[650px] border-collapse text-left text-sm">
+                    <thead className="bg-slate-950 text-white">
+                      <tr>
+                        <th className="px-5 py-4 font-bold">Username</th>
+                        <th className="px-5 py-4 font-bold">Role</th>
+                        <th className="px-5 py-4 font-bold">Status</th>
+                        <th className="px-5 py-4 text-right font-bold">
+                          Aksi
+                        </th>
+                      </tr>
+                    </thead>
 
-                  <tbody>
-                    {users.map((user) => (
-                      <tr
-                        key={user.id}
-                        className="border-t border-slate-100 hover:bg-slate-50"
-                      >
-                        <td className="px-5 py-4">
-                          <p className="font-black text-slate-950">
-                            {user.username}
-                          </p>
-                          <p className="mt-1 text-xs text-slate-500">
-                            ID: {user.id}
-                          </p>
-                        </td>
+                    <tbody>
+                      {filteredUsers.map((user) => (
+                        <tr
+                          key={user.id}
+                          className="border-t border-slate-100 hover:bg-slate-50"
+                        >
+                          <td className="px-5 py-4">
+                            <p className="font-black text-slate-950">
+                              {user.username}
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              ID: {user.id}
+                            </p>
+                          </td>
 
-                        <td className="px-5 py-4">
-                          <span
-                            className={
-                              user.role === "admin"
-                                ? "rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700"
-                                : "rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600"
-                            }
-                          >
-                            {user.role}
-                          </span>
-                        </td>
-
-                        <td className="px-5 py-4">
-                          <span
-                            className={
-                              user.isActive
-                                ? "rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700"
-                                : "rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500"
-                            }
-                          >
-                            {user.isActive ? "Aktif" : "Nonaktif"}
-                          </span>
-                        </td>
-
-                        <td className="px-5 py-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setPasswordResetUser(user);
-                                setNewPassword("");
-                              }}
-                              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:border-red-300 hover:text-red-600"
-                            >
-                              Reset Password
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => toggleUserStatus(user)}
+                          <td className="px-5 py-4">
+                            <span
                               className={
-                                user.isActive
-                                  ? "rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-100"
-                                  : "rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100"
+                                user.role === "admin"
+                                  ? "rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700"
+                                  : "rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600"
                               }
                             >
-                              {user.isActive ? "Nonaktifkan" : "Aktifkan"}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                              {user.role}
+                            </span>
+                          </td>
+
+                          <td className="px-5 py-4">
+                            <span
+                              className={
+                                user.isActive
+                                  ? "rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700"
+                                  : "rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500"
+                              }
+                            >
+                              {user.isActive ? "Aktif" : "Nonaktif"}
+                            </span>
+                          </td>
+
+                          <td className="px-5 py-4 text-right">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPasswordResetUser(user);
+                                  setNewPassword("");
+                                }}
+                                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:border-red-300 hover:text-red-600"
+                              >
+                                Reset Password
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => toggleUserStatus(user)}
+                                className={
+                                  user.isActive
+                                    ? "rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-100"
+                                    : "rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100"
+                                }
+                              >
+                                {user.isActive ? "Nonaktifkan" : "Aktifkan"}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {filteredUsers.length === 0 && (
+                  <div className="p-8 text-center">
+                    <h2 className="text-lg font-black text-slate-950">
+                      User tidak ditemukan
+                    </h2>
+                    <p className="mt-2 text-sm text-slate-600">
+                      Coba ubah pencarian atau filter.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </section>
         </section>
@@ -390,6 +507,7 @@ function AdminUsersPage() {
                 <h2 className="text-2xl font-black text-slate-950">
                   Reset Password
                 </h2>
+
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   Ubah password untuk user{" "}
                   <span className="font-bold text-slate-950">

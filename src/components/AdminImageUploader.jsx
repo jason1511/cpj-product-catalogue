@@ -58,8 +58,12 @@ function AdminImageUploader({
       const data = await response.json();
 
       if (!response.ok || !data.ok) {
-        throw new Error(data.message || "Gagal mengunggah gambar.");
-      }
+  throw new Error(
+    data.error
+      ? `${data.message || "Gagal mengunggah gambar."} Detail: ${data.error}`
+      : data.message || "Gagal mengunggah gambar.",
+  );
+}
 
       onImageUploaded(data.imageUrl);
       setUploadMessage("Gambar berhasil diunggah.");
