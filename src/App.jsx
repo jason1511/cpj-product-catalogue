@@ -17,6 +17,7 @@ import AdminProductEditPage from "./pages/AdminProductEditPage";
 import AdminProductNewPage from "./pages/AdminProductNewPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
+import AdminLogsPage from "./pages/AdminLogsPage";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -35,6 +36,7 @@ function AnimatedRoutes() {
           <Route path="/admin/products/:id/edit" element={<AdminProductEditPage />} />
           <Route path="/admin/products/new" element={<AdminProductNewPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/logs" element={<AdminLogsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </PageTransition>

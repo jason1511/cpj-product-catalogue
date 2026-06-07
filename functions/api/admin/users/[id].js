@@ -1,3 +1,4 @@
+import { writeAdminLog } from "../../../utils/audit";
 export async function onRequestPatch(context) {
   try {
     const { env, params, request, data } = context;
@@ -66,7 +67,16 @@ export async function onRequestPatch(context) {
     )
       .bind(body.isActive ? 1 : 0, id)
       .run();
-
+await writeAdminLog(env, data.adminUser, {
+  action: body.isActive ? "user.activate" : "user.deactivate",
+  targetType: "admin_user",
+  targetId: id,
+  targetLabel: existingUser.username,
+  metadata: {
+    role: existingUser.role,
+    isActive: body.isActive,
+  },
+});
     return Response.json({
       ok: true,
       message: body.isActive

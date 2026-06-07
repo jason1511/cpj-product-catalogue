@@ -1,3 +1,5 @@
+import { writeAdminLog } from "../../utils/audit";
+
 const MAX_FILE_SIZE = 3 * 1024 * 1024;
 
 const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
@@ -48,7 +50,20 @@ export async function onRequestPost(context) {
         { status: 500 },
       );
     }
-
+    await writeAdminLog(env, context.data?.adminUser, {
+  action: colorName ? "image.upload.color" : "image.upload.main",
+  targetType: "product",
+  targetId: String(productId),
+  targetLabel: String(productId),
+  metadata: {
+    key,
+    imageUrl: `/api/images/${key}`,
+    colorName: String(colorName || ""),
+    originalName: file.name,
+    size: file.size,
+    type: file.type,
+  },
+});
     const formData = await request.formData();
     const file = formData.get("image");
     const productId = formData.get("productId");

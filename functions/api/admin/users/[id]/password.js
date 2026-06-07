@@ -1,3 +1,5 @@
+import { writeAdminLog } from "../../../../utils/audit";
+
 async function hashPassword(password, secret) {
   const encoder = new TextEncoder();
   const data = encoder.encode(`${password}:${secret}`);
@@ -80,7 +82,13 @@ export async function onRequestPatch(context) {
     )
       .bind(passwordHash, id)
       .run();
-
+await writeAdminLog(env, context.data?.adminUser, {
+  action: "user.password_reset",
+  targetType: "admin_user",
+  targetId: id,
+  targetLabel: existingUser.username,
+  metadata: {},
+});
     return Response.json({
       ok: true,
       message: "Password user berhasil diperbarui.",

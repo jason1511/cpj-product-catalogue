@@ -1,3 +1,5 @@
+import { writeAdminLog } from "../../utils/audit";
+
 function parseJsonField(value, fallback) {
   if (!value) return fallback;
 
@@ -225,7 +227,19 @@ is_active
         product.is_active,
       )
       .run();
-
+await writeAdminLog(env, context.data?.adminUser, {
+  action: "product.create",
+  targetType: "product",
+  targetId: product.id,
+  targetLabel: `${product.brand} ${product.model}`,
+  metadata: {
+    brand: product.brand,
+    model: product.model,
+    type: product.type,
+    isActive: Boolean(product.is_active),
+    isFeatured: Boolean(product.is_featured),
+  },
+});
     return Response.json({
       ok: true,
       message: "Produk berhasil ditambahkan.",

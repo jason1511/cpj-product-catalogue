@@ -1,3 +1,5 @@
+import { writeAdminLog } from "../../utils/audit";
+
 async function hashPassword(password, secret) {
   const encoder = new TextEncoder();
   const data = encoder.encode(`${password}:${secret}`);
@@ -169,7 +171,15 @@ export async function onRequestPost(context) {
     )
       .bind(id, username, passwordHash, role)
       .run();
-
+await writeAdminLog(env, context.data?.adminUser, {
+  action: "user.create",
+  targetType: "admin_user",
+  targetId: id,
+  targetLabel: username,
+  metadata: {
+    role,
+  },
+});
     return Response.json({
       ok: true,
       message: "User admin berhasil ditambahkan.",
@@ -180,6 +190,7 @@ export async function onRequestPost(context) {
         isActive: true,
       },
     });
+    
   } catch (error) {
     return Response.json(
       {

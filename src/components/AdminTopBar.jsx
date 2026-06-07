@@ -75,13 +75,22 @@ function AdminTopBar() {
           </Link>
 
           {user?.role === "admin" && (
-            <Link
-              to="/admin/users"
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-center text-xs font-bold text-slate-700 transition hover:border-red-300 hover:text-red-600"
-            >
-              User Admin
-            </Link>
-          )}
+  <>
+    <Link
+      to="/admin/users"
+      className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-center text-xs font-bold text-slate-700 transition hover:border-red-300 hover:text-red-600"
+    >
+      User Admin
+    </Link>
+
+    <Link
+      to="/admin/logs"
+      className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-center text-xs font-bold text-slate-700 transition hover:border-red-300 hover:text-red-600"
+    >
+      Audit Log
+    </Link>
+  </>
+)}
 
           <button
             type="button"

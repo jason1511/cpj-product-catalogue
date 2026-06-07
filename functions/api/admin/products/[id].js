@@ -1,3 +1,5 @@
+import { writeAdminLog } from "../../../utils/audit";
+
 function parseJsonField(value, fallback) {
   if (!value) return fallback;
 
@@ -6,6 +8,156 @@ function parseJsonField(value, fallback) {
   } catch {
     return fallback;
   }
+}
+
+function formatArray(value) {
+  if (!Array.isArray(value)) return "";
+
+  return value.join(", ");
+}
+
+function addChange(changes, field, label, before, after) {
+  const normalizedBefore = before ?? "";
+  const normalizedAfter = after ?? "";
+
+  if (String(normalizedBefore) === String(normalizedAfter)) return;
+
+  changes.push({
+    field,
+    label,
+    before: normalizedBefore,
+    after: normalizedAfter,
+  });
+}
+
+function buildProductChanges(beforeRow, afterProduct) {
+  const changes = [];
+
+  const beforeFeatures = parseJsonField(beforeRow.features, []);
+  const beforeColors = parseJsonField(beforeRow.colors, []);
+  const beforeSpecs = parseJsonField(beforeRow.specs, {});
+  const beforeColorImages = parseJsonField(beforeRow.color_images, {});
+
+  const afterFeatures = parseJsonField(afterProduct.features, []);
+  const afterColors = parseJsonField(afterProduct.colors, []);
+  const afterSpecs = parseJsonField(afterProduct.specs, {});
+  const afterColorImages = parseJsonField(afterProduct.color_images, {});
+
+  addChange(changes, "brand", "Brand", beforeRow.brand, afterProduct.brand);
+  addChange(changes, "model", "Model", beforeRow.model, afterProduct.model);
+  addChange(changes, "type", "Penggerak", beforeRow.type, afterProduct.type);
+  addChange(changes, "price", "Harga", beforeRow.price, afterProduct.price);
+
+  addChange(
+    changes,
+    "image",
+    "Gambar Utama",
+    beforeRow.image_url,
+    afterProduct.image_url,
+  );
+
+  addChange(
+    changes,
+    "description",
+    "Deskripsi",
+    beforeRow.description,
+    afterProduct.description,
+  );
+
+  addChange(
+    changes,
+    "features",
+    "Fitur",
+    formatArray(beforeFeatures),
+    formatArray(afterFeatures),
+  );
+
+  addChange(
+    changes,
+    "colors",
+    "Warna",
+    formatArray(beforeColors),
+    formatArray(afterColors),
+  );
+
+  addChange(
+    changes,
+    "battery",
+    "Baterai",
+    beforeSpecs.battery,
+    afterSpecs.battery,
+  );
+
+  addChange(changes, "motor", "Motor", beforeSpecs.motor, afterSpecs.motor);
+
+  addChange(
+    changes,
+    "range",
+    "Jarak Tempuh",
+    beforeSpecs.range,
+    afterSpecs.range,
+  );
+
+  addChange(
+    changes,
+    "speed",
+    "Kecepatan",
+    beforeSpecs.speed,
+    afterSpecs.speed,
+  );
+
+  addChange(
+    changes,
+    "loadCapacity",
+    "Kapasitas Beban",
+    beforeSpecs.loadCapacity,
+    afterSpecs.loadCapacity,
+  );
+
+  addChange(
+    changes,
+    "wheelSize",
+    "Ukuran Roda",
+    beforeSpecs.wheelSize,
+    afterSpecs.wheelSize,
+  );
+
+  addChange(changes, "brake", "Rem", beforeSpecs.brake, afterSpecs.brake);
+
+  addChange(
+    changes,
+    "isFeatured",
+    "Produk Pilihan",
+    Boolean(beforeRow.is_featured) ? "Ya" : "Tidak",
+    Boolean(afterProduct.is_featured) ? "Ya" : "Tidak",
+  );
+
+  addChange(
+    changes,
+    "isActive",
+    "Status Aktif",
+    Boolean(beforeRow.is_active) ? "Aktif" : "Nonaktif",
+    Boolean(afterProduct.is_active) ? "Aktif" : "Nonaktif",
+  );
+
+  const allColorImageKeys = [
+    ...new Set([
+      ...Object.keys(beforeColorImages),
+      ...Object.keys(afterColorImages),
+    ]),
+  ];
+
+  allColorImageKeys.forEach((color) => {
+    addChange(
+      changes,
+      `colorImage.${color}`,
+      `Gambar Warna ${color}`,
+      beforeColorImages[color] || "",
+      afterColorImages[color] || "",
+    );
+  });
+
+  return changes;
 }
 
 function mapProductRow(row) {
@@ -28,13 +180,12 @@ function mapProductRow(row) {
     updatedAt: row.updated_at,
   };
 }
+
 function normalizeTextArray(value) {
   if (!value) return [];
 
   if (Array.isArray(value)) {
-    return value
-      .map((item) => String(item).trim())
-      .filter(Boolean);
+    return value.map((item) => String(item).trim()).filter(Boolean);
   }
 
   return String(value)
@@ -74,7 +225,7 @@ function normalizeProductPayload(body) {
 function validateProductPayload(product) {
   if (!product.brand) return "Brand wajib diisi.";
   if (!product.model) return "Model wajib diisi.";
-  if (!product.type) return "Jenis produk wajib diisi.";
+  if (!product.type) return "Penggerak produk wajib diisi.";
 
   if (product.price !== null && Number.isNaN(product.price)) {
     return "Harga harus berupa angka.";
@@ -82,6 +233,7 @@ function validateProductPayload(product) {
 
   return "";
 }
+
 export async function onRequestGet(context) {
   try {
     const { env, params } = context;
@@ -149,6 +301,7 @@ export async function onRequestGet(context) {
     );
   }
 }
+
 export async function onRequestPut(context) {
   try {
     const { env, params, request } = context;
@@ -166,7 +319,21 @@ export async function onRequestPut(context) {
 
     const existingProduct = await env.DB.prepare(
       `
-      SELECT id
+      SELECT
+        id,
+        brand,
+        model,
+        type,
+        features,
+        price,
+        image_url,
+        description,
+        specs,
+        colors,
+        color_images,
+        source_page,
+        is_featured,
+        is_active
       FROM products
       WHERE id = ?
       LIMIT 1
@@ -202,21 +369,21 @@ export async function onRequestPut(context) {
     await env.DB.prepare(
       `
       UPDATE products
-SET
-  brand = ?,
-  model = ?,
-  type = ?,
-  features = ?,
-  price = ?,
-  image_url = ?,
-  description = ?,
-  specs = ?,
-  colors = ?,
-  color_images = ?,
-  is_featured = ?,
-  is_active = ?,
-  updated_at = CURRENT_TIMESTAMP
-WHERE id = ?
+      SET
+        brand = ?,
+        model = ?,
+        type = ?,
+        features = ?,
+        price = ?,
+        image_url = ?,
+        description = ?,
+        specs = ?,
+        colors = ?,
+        color_images = ?,
+        is_featured = ?,
+        is_active = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
       `,
     )
       .bind(
@@ -236,6 +403,18 @@ WHERE id = ?
       )
       .run();
 
+    const changes = buildProductChanges(existingProduct, product);
+
+    await writeAdminLog(env, context.data?.adminUser, {
+      action: "product.update",
+      targetType: "product",
+      targetId: id,
+      targetLabel: `${product.brand} ${product.model}`,
+      metadata: {
+        changes,
+      },
+    });
+
     return Response.json({
       ok: true,
       message: "Produk berhasil diperbarui.",
@@ -251,6 +430,7 @@ WHERE id = ?
     );
   }
 }
+
 export async function onRequestPatch(context) {
   try {
     const { env, params, request } = context;
@@ -280,7 +460,7 @@ export async function onRequestPatch(context) {
 
     const existingProduct = await env.DB.prepare(
       `
-      SELECT id
+      SELECT id, brand, model
       FROM products
       WHERE id = ?
       LIMIT 1
@@ -310,6 +490,16 @@ export async function onRequestPatch(context) {
     )
       .bind(body.isActive ? 1 : 0, id)
       .run();
+
+    await writeAdminLog(env, context.data?.adminUser, {
+      action: body.isActive ? "product.activate" : "product.deactivate",
+      targetType: "product",
+      targetId: id,
+      targetLabel: `${existingProduct.brand} ${existingProduct.model}`,
+      metadata: {
+        isActive: body.isActive,
+      },
+    });
 
     return Response.json({
       ok: true,
