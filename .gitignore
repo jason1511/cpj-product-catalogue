@@ -1,36 +1,70 @@
 # Dependencies
 node_modules/
+.pnpm-store/
 
-# Build output
+# Build outputs
 dist/
 build/
+.vite/
 
-# Local environment files
+# Local environment variables
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.example
+.env.*.local
+
+# Keep example env files tracked
+!.env.example
+
+# Cloudflare / Wrangler local state
+.wrangler/
+.dev.vars
+.dev.vars.local
+
+# Local databases / generated local data
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
 
 # Logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+wrangler-*.log
 
-# Editor / OS
+# OS files
 .DS_Store
 Thumbs.db
-.vscode/
+desktop.ini
+
+# Editor / IDE files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.example.json
 .idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# Cache
+# Test / coverage output
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
 .cache/
-.parcel-cache/
 
-# Vite
-.vite/
+# Local screenshots / notes
+screenshots/
+notes/
+*.tmp
 
-# Optional deployment files
-.wrangler/
+# Optional: uploaded raw assets not meant for deployment
+# Keep public/ assets tracked because logo_cpj.png, robots.txt, and sitemap.xml need to deploy.
