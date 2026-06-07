@@ -1,6 +1,13 @@
 import { useState } from "react";
 
-function AdminImageUploader({ productId, imageUrl, onImageUploaded }) {
+function AdminImageUploader({
+  productId,
+  colorName = "",
+  imageUrl,
+  title = "Gambar Produk",
+  description = "Upload gambar terlebih dahulu, lalu klik tombol simpan pada form produk untuk menerapkan gambar ke katalog publik.",
+  onImageUploaded,
+}) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -40,7 +47,9 @@ function AdminImageUploader({ productId, imageUrl, onImageUploaded }) {
       const formData = new FormData();
       formData.append("image", selectedFile);
       formData.append("productId", productId);
-     
+     if (colorName) {
+  formData.append("colorName", colorName);
+}
       const response = await fetch("/api/admin/uploads", {
         method: "POST",
         body: formData,
@@ -66,7 +75,11 @@ function AdminImageUploader({ productId, imageUrl, onImageUploaded }) {
 
   return (
     <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-2xl font-black text-slate-950">Gambar Produk</h2>
+      <h2 className="text-2xl font-black text-slate-950">{title}</h2>
+
+<p className="mt-2 text-sm leading-6 text-slate-600">
+  {description}
+</p>
 
       <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
         {displayImage ? (

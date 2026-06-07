@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { createProductMessage, createWhatsAppLink } from "../utils/whatsapp";
 
@@ -12,36 +13,51 @@ function ProductDetailModal({ product, onClose }) {
     keranjang: "Dengan Keranjang",
     pedal: "Dengan Pedal",
   };
+
+  const [selectedColor, setSelectedColor] = useState(
+    product?.colors?.[0] || "",
+  );
+
+  useEffect(() => {
+    setSelectedColor(product?.colors?.[0] || "");
+  }, [product]);
+
+  const selectedColorImage = selectedColor
+    ? product?.colorImages?.[selectedColor]
+    : "";
+
+  const displayImage = selectedColorImage || product?.image;
+
   const specItems = [
-  {
-    label: "Baterai",
-    value: product?.specs.battery,
-  },
-  {
-    label: "Motor",
-    value: product?.specs.motor,
-  },
-  {
-    label: "Jarak Tempuh",
-    value: product?.specs.range,
-  },
-  {
-    label: "Kecepatan",
-    value: product?.specs.speed,
-  },
-  {
-    label: "Kapasitas Beban",
-    value: product?.specs.loadCapacity,
-  },
-  {
-    label: "Ukuran Roda",
-    value: product?.specs.wheelSize,
-  },
-  {
-    label: "Rem",
-    value: product?.specs.brake,
-  },
-];
+    {
+      label: "Baterai",
+      value: product?.specs?.battery,
+    },
+    {
+      label: "Motor",
+      value: product?.specs?.motor,
+    },
+    {
+      label: "Jarak Tempuh",
+      value: product?.specs?.range,
+    },
+    {
+      label: "Kecepatan",
+      value: product?.specs?.speed,
+    },
+    {
+      label: "Kapasitas Beban",
+      value: product?.specs?.loadCapacity,
+    },
+    {
+      label: "Ukuran Roda",
+      value: product?.specs?.wheelSize,
+    },
+    {
+      label: "Rem",
+      value: product?.specs?.brake,
+    },
+  ];
 
   return (
     <AnimatePresence>
@@ -91,14 +107,16 @@ function ProductDetailModal({ product, onClose }) {
 
             <div className="grid gap-6 p-6 lg:grid-cols-[0.9fr_1.1fr]">
               <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-2xl bg-white">
-                {product.image ? (
+                {displayImage ? (
                   <img
-  src={product.image}
-  alt={`${product.brand} ${product.model}`}
-  className="h-full w-full rounded-2xl object-cover"
-/>
+                    src={displayImage}
+                    alt={`${product.brand} ${product.model} ${
+                      selectedColor || ""
+                    }`}
+                    className="h-full w-full rounded-2xl object-contain p-4"
+                  />
                 ) : (
-                  <>
+                  <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-950">
                     <div className="absolute -right-12 top-6 h-44 w-44 rounded-full bg-red-600/30 blur-3xl" />
                     <div className="absolute -left-12 bottom-0 h-44 w-44 rounded-full bg-red-500/20 blur-3xl" />
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(239,68,68,0.28),transparent_45%)]" />
@@ -118,7 +136,7 @@ function ProductDetailModal({ product, onClose }) {
                         CPJ Electric Catalogue
                       </p>
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
 
@@ -141,7 +159,7 @@ function ProductDetailModal({ product, onClose }) {
                   </p>
                 )}
 
-                {product.features.length > 0 && (
+                {product.features?.length > 0 && (
                   <div className="mt-5 flex flex-wrap gap-2">
                     {product.features.map((feature) => (
                       <span
@@ -154,64 +172,86 @@ function ProductDetailModal({ product, onClose }) {
                   </div>
                 )}
 
-                {product.colors && product.colors.length > 0 && (
+                {product.colors?.length > 0 && (
                   <div className="mt-5">
-                    <p className="text-sm font-semibold text-slate-950">
+                    <p className="font-semibold text-slate-950">
                       Pilihan Warna
                     </p>
 
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {product.colors.map((color) => (
-                        <span
-                          key={color}
-                          className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700"
-                        >
-                          {color}
-                        </span>
-                      ))}
+                      {product.colors.map((color) => {
+                        const hasColorImage = Boolean(
+                          product.colorImages?.[color],
+                        );
+                        const isSelected = selectedColor === color;
+
+                        return (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => setSelectedColor(color)}
+                            className={
+                              isSelected
+                                ? "rounded-full border border-red-300 bg-red-50 px-4 py-2 text-sm font-bold text-red-700 shadow-sm"
+                                : "rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-red-200 hover:text-red-600"
+                            }
+                          >
+                            {color}
+                            {hasColorImage && (
+                              <span className="ml-2 text-xs text-red-500">
+                                ●
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
+
+                    <p className="mt-2 text-xs text-slate-500">
+                      Klik warna untuk melihat gambar varian jika tersedia.
+                    </p>
                   </div>
                 )}
 
                 <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
-  {specItems.map((item) => (
-    <div
-      key={item.label}
-      className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4"
-    >
-      <div className="absolute -right-8 -top-8 h-20 w-20 rounded-full bg-red-500/10 blur-xl" />
+                  {specItems.map((item) => (
+                    <div
+                      key={item.label}
+                      className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                    >
+                      <div className="absolute -right-8 -top-8 h-20 w-20 rounded-full bg-red-500/10 blur-xl" />
 
-      <div className="relative">
-        <p className="text-xs font-black uppercase tracking-wide text-slate-500">
-          {item.label}
-        </p>
+                      <div className="relative">
+                        <p className="text-xs font-black uppercase tracking-wide text-slate-500">
+                          {item.label}
+                        </p>
 
-        <p className="mt-2 font-semibold leading-6 text-slate-950">
-          {item.value || "-"}
-        </p>
-      </div>
-    </div>
-  ))}
-</div>
+                        <p className="mt-2 font-semibold leading-6 text-slate-950">
+                          {item.value || "-"}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
                 <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-  <a
-    href={createWhatsAppLink(createProductMessage(product))}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="rounded-xl bg-red-600 px-5 py-3 text-center text-sm font-bold text-white shadow-lg shadow-red-600/25 transition hover:-translate-y-0.5 hover:bg-red-700"
-  >
-    Tanya Produk Ini
-  </a>
+                  <a
+                    href={createWhatsAppLink(createProductMessage(product))}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-xl bg-red-600 px-5 py-3 text-center text-sm font-bold text-white shadow-lg shadow-red-600/25 transition hover:-translate-y-0.5 hover:bg-red-700"
+                  >
+                    Tanya Produk Ini
+                  </a>
 
-  <button
-    type="button"
-    onClick={onClose}
-    className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:-translate-y-0.5 hover:border-red-300 hover:text-red-600 hover:shadow-lg"
-  >
-    Kembali ke Katalog
-  </button>
-</div>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:-translate-y-0.5 hover:border-red-300 hover:text-red-600 hover:shadow-lg"
+                  >
+                    Kembali ke Katalog
+                  </button>
+                </div>
               </div>
             </div>
           </motion.div>

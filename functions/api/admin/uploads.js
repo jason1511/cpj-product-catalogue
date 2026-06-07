@@ -19,12 +19,17 @@ function createSafeFileName(value) {
     .replace(/^-+|-+$/g, "");
 }
 
-function createImageKey(file, productId) {
+function createImageKey(file, productId, colorName) {
   const extension = getFileExtension(file);
   const safeProductId = createSafeFileName(productId);
+  const safeColorName = createSafeFileName(colorName);
 
   if (!safeProductId) {
     throw new Error("ID produk wajib tersedia sebelum upload gambar.");
+  }
+
+  if (safeColorName) {
+    return `product-images/${safeProductId}-${safeColorName}.${extension}`;
   }
 
   return `product-images/${safeProductId}.${extension}`;
@@ -47,7 +52,7 @@ export async function onRequestPost(context) {
     const formData = await request.formData();
     const file = formData.get("image");
     const productId = formData.get("productId");
-
+    const colorName = formData.get("colorName");
     if (!productId) {
       return Response.json(
         {
@@ -88,16 +93,17 @@ export async function onRequestPost(context) {
       );
     }
 
-    const key = createImageKey(file, productId);
+    const key = createImageKey(file, productId, colorName);
 
     await env.PRODUCT_IMAGES.put(key, file.stream(), {
       httpMetadata: {
         contentType: file.type,
       },
       customMetadata: {
-        originalName: file.name,
-        productId: String(productId),
-      },
+  originalName: file.name,
+  productId: String(productId),
+  colorName: String(colorName || ""),
+},
     });
 
     return Response.json({

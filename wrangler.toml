@@ -9,4 +9,4 @@ database_id = "876766b2-1023-4b79-9de4-85f924500324"
 
 [[r2_buckets]]
 bucket_name = "cpj-product-images"
-binding = "cpj_product_images"
+binding = "PRODUCT_IMAGES"

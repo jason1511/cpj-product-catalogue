@@ -108,6 +108,7 @@ if (productsResponse.ok && productsData.ok && isMounted) {
             description: product.description || "",
             featuresText: arrayToText(product.features),
             colorsText: arrayToText(product.colors),
+            colorImages: product.colorImages || {},
             battery: product.specs?.battery || "",
             motor: product.specs?.motor || "",
             range: product.specs?.range || "",
@@ -138,7 +139,22 @@ if (productsResponse.ok && productsData.ok && isMounted) {
       isMounted = false;
     };
   }, [id]);
+  function textToArray(value) {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
 
+function updateColorImage(color, imageUrl) {
+  setFormData((current) => ({
+    ...current,
+    colorImages: {
+      ...(current.colorImages || {}),
+      [color]: imageUrl,
+    },
+  }));
+}
   function updateField(field, value) {
     setFormData((current) => ({
       ...current,
@@ -182,6 +198,7 @@ async function handleSubmit(event) {
       description: formData.description,
       features: formData.featuresText,
       colors: formData.colorsText,
+      colorImages: formData.colorImages || {},
       specs: {
         battery: formData.battery,
         motor: formData.motor,
@@ -391,7 +408,36 @@ async function handleSubmit(event) {
   imageUrl={formData.image}
   onImageUploaded={(imageUrl) => updateField("image", imageUrl)}
 />
+  <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+  <h2 className="text-2xl font-black text-slate-950">
+    Gambar per Warna
+  </h2>
 
+  <p className="mt-2 text-sm leading-6 text-slate-600">
+    Gambar ini akan muncul saat pengunjung memilih warna tertentu di detail
+    produk.
+  </p>
+
+  <div className="mt-5 space-y-4">
+    {textToArray(formData.colorsText).length > 0 ? (
+      textToArray(formData.colorsText).map((color) => (
+        <AdminImageUploader
+          key={color}
+          productId={formData.id}
+          colorName={color}
+          imageUrl={formData.colorImages?.[color] || ""}
+          title={`Gambar ${color}`}
+          description={`Upload gambar khusus untuk warna ${color}. Jangan lupa klik Simpan Perubahan setelah upload.`}
+          onImageUploaded={(imageUrl) => updateColorImage(color, imageUrl)}
+        />
+      ))
+    ) : (
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600">
+        Isi daftar warna terlebih dahulu, misalnya: Pink, Hijau, Biru.
+      </div>
+    )}
+  </div>
+</section>
   <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
     <h2 className="text-2xl font-black text-slate-950">
       Status Produk
