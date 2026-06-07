@@ -5,6 +5,7 @@ const protectedApiPrefixes = [
   "/api/admin/logout",
   "/api/admin/users",
   "/api/admin/logs",
+  "/api/admin/images",
 ];
 const protectedPagePrefixes = ["/admin"];
 const adminOnlyPagePrefixes = [
@@ -16,6 +17,7 @@ const adminOnlyApiPrefixes = [
   "/api/admin/users",
   "/api/admin/settings",
   "/api/admin/logs",
+  "/api/admin/images",
 ];
 function getCookie(request, name) {
   const cookieHeader = request.headers.get("Cookie") || "";

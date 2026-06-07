@@ -62,7 +62,7 @@ function getDriveLabel(value) {
 }
 
 function createSlug(text) {
-  return text
+  return String(text || "")
     .toLowerCase()
     .trim()
     .replaceAll("&", "dan")
@@ -74,11 +74,21 @@ function createProductId(brand, model, driveType) {
   return createSlug(`${brand} ${model} ${driveType}`);
 }
 
+function textToArray(value) {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function AdminProductNewPage() {
   const navigate = useNavigate();
 
   const [existingProducts, setExistingProducts] = useState([]);
   const [isIdManuallyEdited, setIsIdManuallyEdited] = useState(false);
+
+  const [mainImageFile, setMainImageFile] = useState(null);
+  const [colorImageFiles, setColorImageFiles] = useState({});
 
   const [formData, setFormData] = useState({
     id: "",
@@ -149,22 +159,7 @@ function AdminProductNewPage() {
   const colorOptions = [
     ...new Set(existingProducts.flatMap((product) => product.colors || [])),
   ];
-function textToArray(value) {
-  return String(value || "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
 
-function updateColorImage(color, imageUrl) {
-  setFormData((current) => ({
-    ...current,
-    colorImages: {
-      ...(current.colorImages || {}),
-      [color]: imageUrl,
-    },
-  }));
-}
   function updateField(field, value) {
     setFormData((current) => {
       const next = {
@@ -184,6 +179,42 @@ function updateColorImage(color, imageUrl) {
     });
   }
 
+  function updateColorImageFile(color, file) {
+    setColorImageFiles((current) => ({
+      ...current,
+      [color]: file,
+    }));
+  }
+
+  async function uploadProductImage({ file, productId, colorName = "" }) {
+    if (!file) return "";
+
+    const uploadFormData = new FormData();
+    uploadFormData.append("image", file);
+    uploadFormData.append("productId", productId);
+
+    if (colorName) {
+      uploadFormData.append("colorName", colorName);
+    }
+
+    const response = await fetch("/api/admin/uploads", {
+      method: "POST",
+      body: uploadFormData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(
+        data.error
+          ? `${data.message || "Gagal mengunggah gambar."} Detail: ${data.error}`
+          : data.message || "Gagal mengunggah gambar.",
+      );
+    }
+
+    return data.imageUrl;
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
 
@@ -191,17 +222,45 @@ function updateColorImage(color, imageUrl) {
       setIsSaving(true);
       setErrorMessage("");
 
+      if (!formData.id) {
+        throw new Error("ID produk wajib tersedia sebelum menyimpan gambar.");
+      }
+
+      let imageUrl = formData.image;
+      const colorImages = {
+        ...(formData.colorImages || {}),
+      };
+
+      if (mainImageFile) {
+        imageUrl = await uploadProductImage({
+          file: mainImageFile,
+          productId: formData.id,
+        });
+      }
+
+      for (const [color, file] of Object.entries(colorImageFiles)) {
+        if (file) {
+          const uploadedUrl = await uploadProductImage({
+            file,
+            productId: formData.id,
+            colorName: color,
+          });
+
+          colorImages[color] = uploadedUrl;
+        }
+      }
+
       const payload = {
         id: formData.id,
         brand: formData.brand,
         model: formData.model,
         type: formData.type,
         price: formData.price,
-        image: formData.image,
+        image: imageUrl,
         description: formData.description,
         features: formData.featuresText,
         colors: formData.colorsText,
-        colorImages: formData.colorImages || {},
+        colorImages,
         specs: {
           battery: formData.battery,
           motor: formData.motor,
@@ -230,8 +289,13 @@ function updateColorImage(color, imageUrl) {
         throw new Error(data.message || "Gagal menambahkan produk.");
       }
 
+      setMainImageFile(null);
+      setColorImageFiles({});
+
       alert("Produk berhasil ditambahkan.");
-      navigate(`/admin/products/${data.id}/edit`);
+
+      const createdProductId = data.product?.id || data.id || formData.id;
+      navigate(`/admin/products/${createdProductId}/edit`);
     } catch (error) {
       console.error(error);
       setErrorMessage(error.message);
@@ -379,8 +443,6 @@ function updateColorImage(color, imageUrl) {
                 </p>
               </div>
 
-              
-
               <div className="md:col-span-2">
                 <label className="text-sm font-semibold text-slate-700">
                   Deskripsi
@@ -396,76 +458,81 @@ function updateColorImage(color, imageUrl) {
               </div>
             </div>
           </section>
-<div className="space-y-6">
-  <AdminImageUploader
-  productId={formData.id}
-  imageUrl={formData.image}
-  onImageUploaded={(imageUrl) => updateField("image", imageUrl)}
-/>
-<section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-  <h2 className="text-2xl font-black text-slate-950">
-    Gambar per Warna
-  </h2>
 
-  <p className="mt-2 text-sm leading-6 text-slate-600">
-    Isi daftar warna terlebih dahulu, lalu upload gambar untuk masing-masing
-    warna jika tersedia.
-  </p>
+          <div className="space-y-6">
+            <AdminImageUploader
+              imageUrl={formData.image}
+              selectedFile={mainImageFile}
+              onFileSelected={setMainImageFile}
+            />
 
-  <div className="mt-5 space-y-4">
-    {textToArray(formData.colorsText).length > 0 ? (
-      textToArray(formData.colorsText).map((color) => (
-        <AdminImageUploader
-          key={color}
-          productId={formData.id}
-          colorName={color}
-          imageUrl={formData.colorImages?.[color] || ""}
-          title={`Gambar ${color}`}
-          description={`Upload gambar khusus untuk warna ${color}. Jangan lupa klik Tambah Produk setelah upload.`}
-          onImageUploaded={(imageUrl) => updateColorImage(color, imageUrl)}
-        />
-      ))
-    ) : (
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600">
-        Isi daftar warna terlebih dahulu, misalnya: Pink, Hijau, Biru.
-      </div>
-    )}
-  </div>
-</section>
-  <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-    <h2 className="text-2xl font-black text-slate-950">
-      Status Produk
-    </h2>
+            <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-2xl font-black text-slate-950">
+                Gambar per Warna
+              </h2>
 
-    <div className="mt-6 space-y-4">
-      <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <input
-          type="checkbox"
-          checked={formData.isFeatured}
-          onChange={(event) =>
-            updateField("isFeatured", event.target.checked)
-          }
-        />
-        <span className="text-sm font-bold text-slate-700">
-          Produk pilihan
-        </span>
-      </label>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Isi daftar warna terlebih dahulu, lalu pilih gambar untuk
+                masing-masing warna jika tersedia.
+              </p>
 
-      <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <input
-          type="checkbox"
-          checked={formData.isActive}
-          onChange={(event) =>
-            updateField("isActive", event.target.checked)
-          }
-        />
-        <span className="text-sm font-bold text-slate-700">
-          Tampilkan di katalog publik
-        </span>
-      </label>
-    </div>
-  </section>
-</div>
+              <div className="mt-5 space-y-4">
+                {textToArray(formData.colorsText).length > 0 ? (
+                  textToArray(formData.colorsText).map((color) => (
+                    <AdminImageUploader
+                      key={color}
+                      imageUrl={formData.colorImages?.[color] || ""}
+                      selectedFile={colorImageFiles[color] || null}
+                      title={`Gambar ${color}`}
+                      description={`Pilih gambar khusus untuk warna ${color}. Gambar akan diupload saat produk disimpan.`}
+                      onFileSelected={(file) =>
+                        updateColorImageFile(color, file)
+                      }
+                    />
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600">
+                    Isi daftar warna terlebih dahulu, misalnya: Pink, Hijau,
+                    Biru.
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-2xl font-black text-slate-950">
+                Status Produk
+              </h2>
+
+              <div className="mt-6 space-y-4">
+                <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <input
+                    type="checkbox"
+                    checked={formData.isFeatured}
+                    onChange={(event) =>
+                      updateField("isFeatured", event.target.checked)
+                    }
+                  />
+                  <span className="text-sm font-bold text-slate-700">
+                    Produk pilihan
+                  </span>
+                </label>
+
+                <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <input
+                    type="checkbox"
+                    checked={formData.isActive}
+                    onChange={(event) =>
+                      updateField("isActive", event.target.checked)
+                    }
+                  />
+                  <span className="text-sm font-bold text-slate-700">
+                    Tampilkan di katalog publik
+                  </span>
+                </label>
+              </div>
+            </section>
+          </div>
 
           <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
             <h2 className="text-2xl font-black text-slate-950">

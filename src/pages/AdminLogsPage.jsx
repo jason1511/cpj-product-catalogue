@@ -12,6 +12,7 @@ const actionLabels = {
   "user.activate": "User diaktifkan",
   "user.deactivate": "User dinonaktifkan",
   "user.password_reset": "Password user direset",
+  "image.cleanup.unused": "Cleanup gambar tidak terpakai",
 };
 
 function formatDate(value) {
@@ -31,7 +32,17 @@ function formatValue(value) {
 
 function formatLogDetail(log) {
   const metadata = log.metadata || {};
+if (log.action === "image.cleanup.unused") {
+  const deletedCount = metadata.deletedKeys?.length || 0;
+  const skippedCount = metadata.skippedKeys?.length || 0;
 
+  return [
+    `${deletedCount} gambar tidak terpakai dihapus dari R2.`,
+    skippedCount > 0
+      ? `${skippedCount} gambar dilewati karena masih digunakan.`
+      : "Tidak ada gambar yang dilewati.",
+  ];
+}
   if (log.action === "product.update") {
     const changes = metadata.changes || [];
 

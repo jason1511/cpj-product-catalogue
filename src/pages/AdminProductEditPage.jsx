@@ -67,13 +67,26 @@ function arrayToText(value) {
   return value.join(", ");
 }
 
+function textToArray(value) {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function AdminProductEditPage() {
   const { id } = useParams();
+
   const [existingProducts, setExistingProducts] = useState([]);
   const [formData, setFormData] = useState(null);
+
+  const [mainImageFile, setMainImageFile] = useState(null);
+  const [colorImageFiles, setColorImageFiles] = useState({});
+
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -90,12 +103,14 @@ function AdminProductEditPage() {
         }
 
         const product = data.product;
-        const productsResponse = await fetch("/api/admin/products");
-const productsData = await productsResponse.json();
 
-if (productsResponse.ok && productsData.ok && isMounted) {
-  setExistingProducts(productsData.products);
-}
+        const productsResponse = await fetch("/api/admin/products");
+        const productsData = await productsResponse.json();
+
+        if (productsResponse.ok && productsData.ok && isMounted) {
+          setExistingProducts(productsData.products);
+        }
+
         if (isMounted) {
           setFormData({
             id: product.id,
@@ -118,6 +133,9 @@ if (productsResponse.ok && productsData.ok && isMounted) {
             isFeatured: Boolean(product.isFeatured),
             isActive: Boolean(product.isActive),
           });
+
+          setMainImageFile(null);
+          setColorImageFiles({});
         }
       } catch (error) {
         console.error(error);
@@ -138,101 +156,161 @@ if (productsResponse.ok && productsData.ok && isMounted) {
       isMounted = false;
     };
   }, [id]);
-  function textToArray(value) {
-  return String(value || "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
 
-function updateColorImage(color, imageUrl) {
-  setFormData((current) => ({
-    ...current,
-    colorImages: {
-      ...(current.colorImages || {}),
-      [color]: imageUrl,
-    },
-  }));
-}
+  const brandOptions = [
+    ...new Set(existingProducts.map((product) => product.brand).filter(Boolean)),
+  ];
+
+  const driveOptions = [
+    ...new Set([
+      ...fallbackDriveOptions,
+      ...existingProducts.map((product) => product.type).filter(Boolean),
+    ]),
+  ];
+
+  const featureOptions = [
+    ...new Set([
+      ...fallbackFeatureOptions,
+      ...existingProducts.flatMap((product) => product.features || []),
+    ]),
+  ];
+
+  const colorOptions = [
+    ...new Set(existingProducts.flatMap((product) => product.colors || [])),
+  ];
+
   function updateField(field, value) {
     setFormData((current) => ({
       ...current,
       [field]: value,
     }));
   }
-const brandOptions = [
-  ...new Set(existingProducts.map((product) => product.brand).filter(Boolean)),
-];
 
-const driveOptions = [
-  ...new Set([
-    ...fallbackDriveOptions,
-    ...existingProducts.map((product) => product.type).filter(Boolean),
-  ]),
-];
+  function updateColorImageFile(color, file) {
+    setColorImageFiles((current) => ({
+      ...current,
+      [color]: file,
+    }));
+  }
 
-const featureOptions = [
-  ...new Set([
-    ...fallbackFeatureOptions,
-    ...existingProducts.flatMap((product) => product.features || []),
-  ]),
-];
+  async function uploadProductImage({ file, productId, colorName = "" }) {
+    if (!file) return "";
 
-const colorOptions = [
-  ...new Set(existingProducts.flatMap((product) => product.colors || [])),
-];
-async function handleSubmit(event) {
-  event.preventDefault();
+    const uploadFormData = new FormData();
+    uploadFormData.append("image", file);
+    uploadFormData.append("productId", productId);
 
-  try {
-    setIsSaving(true);
-    setErrorMessage("");
+    if (colorName) {
+      uploadFormData.append("colorName", colorName);
+    }
 
-    const payload = {
-      brand: formData.brand,
-      model: formData.model,
-      type: formData.type,
-      price: formData.price,
-      image: formData.image,
-      description: formData.description,
-      features: formData.featuresText,
-      colors: formData.colorsText,
-      colorImages: formData.colorImages || {},
-      specs: {
-        battery: formData.battery,
-        motor: formData.motor,
-        range: formData.range,
-        speed: formData.speed,
-        loadCapacity: formData.loadCapacity,
-        wheelSize: formData.wheelSize,
-        brake: formData.brake,
-      },
-      isFeatured: formData.isFeatured,
-      isActive: formData.isActive,
-    };
-
-    const response = await fetch(`/api/admin/products/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
+    const response = await fetch("/api/admin/uploads", {
+      method: "POST",
+      body: uploadFormData,
     });
 
     const data = await response.json();
 
     if (!response.ok || !data.ok) {
-      throw new Error(data.message || "Gagal menyimpan perubahan.");
+      throw new Error(
+        data.error
+          ? `${data.message || "Gagal mengunggah gambar."} Detail: ${data.error}`
+          : data.message || "Gagal mengunggah gambar.",
+      );
     }
 
-    alert("Produk berhasil diperbarui.");
-  } catch (error) {
-    console.error(error);
-    setErrorMessage(error.message);
-  } finally {
-    setIsSaving(false);
+    return data.imageUrl;
   }
-}
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    try {
+      setIsSaving(true);
+      setErrorMessage("");
+
+      if (!formData.id) {
+        throw new Error("ID produk wajib tersedia sebelum menyimpan gambar.");
+      }
+
+      let imageUrl = formData.image;
+      const colorImages = {
+        ...(formData.colorImages || {}),
+      };
+
+      if (mainImageFile) {
+        imageUrl = await uploadProductImage({
+          file: mainImageFile,
+          productId: formData.id,
+        });
+      }
+
+      for (const [color, file] of Object.entries(colorImageFiles)) {
+        if (file) {
+          const uploadedUrl = await uploadProductImage({
+            file,
+            productId: formData.id,
+            colorName: color,
+          });
+
+          colorImages[color] = uploadedUrl;
+        }
+      }
+
+      const payload = {
+        brand: formData.brand,
+        model: formData.model,
+        type: formData.type,
+        price: formData.price,
+        image: imageUrl,
+        description: formData.description,
+        features: formData.featuresText,
+        colors: formData.colorsText,
+        colorImages,
+        specs: {
+          battery: formData.battery,
+          motor: formData.motor,
+          range: formData.range,
+          speed: formData.speed,
+          loadCapacity: formData.loadCapacity,
+          wheelSize: formData.wheelSize,
+          brake: formData.brake,
+        },
+        isFeatured: formData.isFeatured,
+        isActive: formData.isActive,
+      };
+
+      const response = await fetch(`/api/admin/products/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.message || "Gagal menyimpan perubahan.");
+      }
+
+      setFormData((current) => ({
+        ...current,
+        image: imageUrl,
+        colorImages,
+      }));
+
+      setMainImageFile(null);
+      setColorImageFiles({});
+
+      alert("Produk berhasil diperbarui.");
+    } catch (error) {
+      console.error(error);
+      setErrorMessage(error.message);
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   return (
     <main className="py-10">
@@ -300,22 +378,24 @@ async function handleSubmit(event) {
 
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <div>
-  <label className="text-sm font-semibold text-slate-700">
-    Brand
-  </label>
-  <input
-    type="text"
-    list="edit-brand-options"
-    value={formData.brand}
-    onChange={(event) => updateField("brand", event.target.value)}
-    className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50"
-  />
-  <datalist id="edit-brand-options">
-    {brandOptions.map((brand) => (
-      <option key={brand} value={brand} />
-    ))}
-  </datalist>
-</div>
+                  <label className="text-sm font-semibold text-slate-700">
+                    Brand
+                  </label>
+                  <input
+                    type="text"
+                    list="edit-brand-options"
+                    value={formData.brand}
+                    onChange={(event) =>
+                      updateField("brand", event.target.value)
+                    }
+                    className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50"
+                  />
+                  <datalist id="edit-brand-options">
+                    {brandOptions.map((brand) => (
+                      <option key={brand} value={brand} />
+                    ))}
+                  </datalist>
+                </div>
 
                 <div>
                   <label className="text-sm font-semibold text-slate-700">
@@ -330,45 +410,53 @@ async function handleSubmit(event) {
                     className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50"
                   />
                 </div>
+
                 <div className="md:col-span-2">
-  <label className="text-sm font-semibold text-slate-700">
-    ID Produk
-  </label>
-  <input
-    type="text"
-    value={formData.id}
-    readOnly
-    className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-medium text-slate-500 outline-none"
-  />
-  <p className="mt-2 text-xs text-slate-500">
-    ID produk tidak diubah dari halaman edit agar URL dan data tetap aman.
-  </p>
-</div>
+                  <label className="text-sm font-semibold text-slate-700">
+                    ID Produk
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.id}
+                    readOnly
+                    className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-medium text-slate-500 outline-none"
+                  />
+                  <p className="mt-2 text-xs text-slate-500">
+                    ID produk tidak diubah dari halaman edit agar URL dan data
+                    tetap aman.
+                  </p>
+                </div>
 
                 <div>
-  <label className="text-sm font-semibold text-slate-700">
-    Penggerak
-  </label>
-  <input
-    type="text"
-    list="edit-drive-options"
-    value={formData.type}
-    onChange={(event) => updateField("type", event.target.value)}
-    placeholder="Contoh: motor-listrik, sepeda-listrik, roda-tiga"
-    className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50"
-  />
-  <datalist id="edit-drive-options">
-    {driveOptions.map((type) => (
-      <option key={type} value={type} label={getDriveLabel(type)} />
-    ))}
-  </datalist>
-  <p className="mt-2 text-xs text-slate-500">
-    Gunakan nilai internal seperti{" "}
-    <span className="font-semibold">motor-listrik</span>,{" "}
-    <span className="font-semibold">sepeda-listrik</span>, atau ketik penggerak
-    baru jika belum tersedia.
-  </p>
-</div>
+                  <label className="text-sm font-semibold text-slate-700">
+                    Penggerak
+                  </label>
+                  <input
+                    type="text"
+                    list="edit-drive-options"
+                    value={formData.type}
+                    onChange={(event) =>
+                      updateField("type", event.target.value)
+                    }
+                    placeholder="Contoh: motor-listrik, sepeda-listrik, roda-tiga"
+                    className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50"
+                  />
+                  <datalist id="edit-drive-options">
+                    {driveOptions.map((type) => (
+                      <option
+                        key={type}
+                        value={type}
+                        label={getDriveLabel(type)}
+                      />
+                    ))}
+                  </datalist>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Gunakan nilai internal seperti{" "}
+                    <span className="font-semibold">motor-listrik</span>,{" "}
+                    <span className="font-semibold">sepeda-listrik</span>, atau
+                    ketik penggerak baru jika belum tersedia.
+                  </p>
+                </div>
 
                 <div>
                   <label className="text-sm font-semibold text-slate-700">
@@ -400,76 +488,80 @@ async function handleSubmit(event) {
               </div>
             </section>
 
-<div className="space-y-6">
-  <AdminImageUploader
-  productId={formData.id}
-  imageUrl={formData.image}
-  onImageUploaded={(imageUrl) => updateField("image", imageUrl)}
-/>
-  <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-  <h2 className="text-2xl font-black text-slate-950">
-    Gambar per Warna
-  </h2>
+            <div className="space-y-6">
+              <AdminImageUploader
+                imageUrl={formData.image}
+                selectedFile={mainImageFile}
+                onFileSelected={setMainImageFile}
+              />
 
-  <p className="mt-2 text-sm leading-6 text-slate-600">
-    Gambar ini akan muncul saat pengunjung memilih warna tertentu di detail
-    produk.
-  </p>
+              <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="text-2xl font-black text-slate-950">
+                  Gambar per Warna
+                </h2>
 
-  <div className="mt-5 space-y-4">
-    {textToArray(formData.colorsText).length > 0 ? (
-      textToArray(formData.colorsText).map((color) => (
-        <AdminImageUploader
-          key={color}
-          productId={formData.id}
-          colorName={color}
-          imageUrl={formData.colorImages?.[color] || ""}
-          title={`Gambar ${color}`}
-          description={`Upload gambar khusus untuk warna ${color}. Jangan lupa klik Simpan Perubahan setelah upload.`}
-          onImageUploaded={(imageUrl) => updateColorImage(color, imageUrl)}
-        />
-      ))
-    ) : (
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600">
-        Isi daftar warna terlebih dahulu, misalnya: Pink, Hijau, Biru.
-      </div>
-    )}
-  </div>
-</section>
-  <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-    <h2 className="text-2xl font-black text-slate-950">
-      Status Produk
-    </h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Gambar ini akan muncul saat pengunjung memilih warna tertentu
+                  di detail produk.
+                </p>
 
-    <div className="mt-6 space-y-4">
-      <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <input
-          type="checkbox"
-          checked={formData.isFeatured}
-          onChange={(event) =>
-            updateField("isFeatured", event.target.checked)
-          }
-        />
-        <span className="text-sm font-bold text-slate-700">
-          Tampilkan sebagai produk pilihan
-        </span>
-      </label>
+                <div className="mt-5 space-y-4">
+                  {textToArray(formData.colorsText).length > 0 ? (
+                    textToArray(formData.colorsText).map((color) => (
+                      <AdminImageUploader
+                        key={color}
+                        imageUrl={formData.colorImages?.[color] || ""}
+                        selectedFile={colorImageFiles[color] || null}
+                        title={`Gambar ${color}`}
+                        description={`Pilih gambar khusus untuk warna ${color}. Gambar akan diupload saat produk disimpan.`}
+                        onFileSelected={(file) =>
+                          updateColorImageFile(color, file)
+                        }
+                      />
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600">
+                      Isi daftar warna terlebih dahulu, misalnya: Pink, Hijau,
+                      Biru.
+                    </div>
+                  )}
+                </div>
+              </section>
 
-      <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <input
-          type="checkbox"
-          checked={formData.isActive}
-          onChange={(event) =>
-            updateField("isActive", event.target.checked)
-          }
-        />
-        <span className="text-sm font-bold text-slate-700">
-          Tampilkan di katalog publik
-        </span>
-      </label>
-    </div>
-  </section>
-</div>
+              <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="text-2xl font-black text-slate-950">
+                  Status Produk
+                </h2>
+
+                <div className="mt-6 space-y-4">
+                  <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <input
+                      type="checkbox"
+                      checked={formData.isFeatured}
+                      onChange={(event) =>
+                        updateField("isFeatured", event.target.checked)
+                      }
+                    />
+                    <span className="text-sm font-bold text-slate-700">
+                      Tampilkan sebagai produk pilihan
+                    </span>
+                  </label>
+
+                  <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <input
+                      type="checkbox"
+                      checked={formData.isActive}
+                      onChange={(event) =>
+                        updateField("isActive", event.target.checked)
+                      }
+                    />
+                    <span className="text-sm font-bold text-slate-700">
+                      Tampilkan di katalog publik
+                    </span>
+                  </label>
+                </div>
+              </section>
+            </div>
 
             <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
               <h2 className="text-2xl font-black text-slate-950">
@@ -477,77 +569,85 @@ async function handleSubmit(event) {
               </h2>
 
               <div className="mt-6 grid gap-4 md:grid-cols-2">
-               <div>
-  <label className="text-sm font-semibold text-slate-700">
-    Fitur
-  </label>
-  <input
-    type="text"
-    list="edit-feature-options"
-    value={formData.featuresText}
-    onChange={(event) => updateField("featuresText", event.target.value)}
-    placeholder="Contoh: pedal, keranjang"
-    className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50"
-  />
-  <datalist id="edit-feature-options">
-    {featureOptions.map((feature) => (
-      <option key={feature} value={feature} />
-    ))}
-  </datalist>
-  <p className="mt-2 text-xs text-slate-500">
-    Pisahkan lebih dari satu fitur dengan koma. Contoh:{" "}
-    <span className="font-semibold">pedal, keranjang</span>.
-  </p>
-</div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-700">
+                    Fitur
+                  </label>
+                  <input
+                    type="text"
+                    list="edit-feature-options"
+                    value={formData.featuresText}
+                    onChange={(event) =>
+                      updateField("featuresText", event.target.value)
+                    }
+                    placeholder="Contoh: pedal, keranjang"
+                    className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50"
+                  />
+                  <datalist id="edit-feature-options">
+                    {featureOptions.map((feature) => (
+                      <option key={feature} value={feature} />
+                    ))}
+                  </datalist>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Pisahkan lebih dari satu fitur dengan koma. Contoh:{" "}
+                    <span className="font-semibold">pedal, keranjang</span>.
+                  </p>
+                </div>
 
                 <div>
-  <label className="text-sm font-semibold text-slate-700">
-    Warna
-  </label>
-  <input
-    type="text"
-    list="edit-color-options"
-    value={formData.colorsText}
-    onChange={(event) => updateField("colorsText", event.target.value)}
-    placeholder="Contoh: Merah, Hitam, Putih"
-    className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50"
-  />
-  <datalist id="edit-color-options">
-    {colorOptions.map((color) => (
-      <option key={color} value={color} />
-    ))}
-  </datalist>
-  <p className="mt-2 text-xs text-slate-500">
-    Pisahkan warna dengan koma. Contoh:{" "}
-    <span className="font-semibold">Merah, Hitam, Cream</span>.
-  </p>
-</div>
+                  <label className="text-sm font-semibold text-slate-700">
+                    Warna
+                  </label>
+                  <input
+                    type="text"
+                    list="edit-color-options"
+                    value={formData.colorsText}
+                    onChange={(event) =>
+                      updateField("colorsText", event.target.value)
+                    }
+                    placeholder="Contoh: Merah, Hitam, Putih"
+                    className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50"
+                  />
+                  <datalist id="edit-color-options">
+                    {colorOptions.map((color) => (
+                      <option key={color} value={color} />
+                    ))}
+                  </datalist>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Pisahkan warna dengan koma. Contoh:{" "}
+                    <span className="font-semibold">Merah, Hitam, Cream</span>.
+                  </p>
+                </div>
 
                 {specFields.map((item) => (
-  <div key={item.field}>
-    <label className="text-sm font-semibold text-slate-700">
-      {item.label}
-    </label>
-    <input
-      type="text"
-      value={formData[item.field]}
-      onChange={(event) => updateField(item.field, event.target.value)}
-      placeholder={item.placeholder}
-      className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50"
-    />
-    <p className="mt-2 text-xs text-slate-500">{item.helper}</p>
-  </div>
-))}
+                  <div key={item.field}>
+                    <label className="text-sm font-semibold text-slate-700">
+                      {item.label}
+                    </label>
+                    <input
+                      type="text"
+                      value={formData[item.field]}
+                      onChange={(event) =>
+                        updateField(item.field, event.target.value)
+                      }
+                      placeholder={item.placeholder}
+                      className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50"
+                    />
+                    <p className="mt-2 text-xs text-slate-500">
+                      {item.helper}
+                    </p>
+                  </div>
+                ))}
               </div>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <button
-  type="submit"
-  disabled={isSaving}
-  className="rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-red-600/25 transition hover:-translate-y-0.5 hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
->
-  {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
-</button>
+                  type="submit"
+                  disabled={isSaving}
+                  className="rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-red-600/25 transition hover:-translate-y-0.5 hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
+                </button>
 
                 <Link
                   to="/admin/products"

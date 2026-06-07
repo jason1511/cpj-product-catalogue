@@ -139,6 +139,9 @@ function Navbar() {
                     <NavLink to="/admin/logs" className={adminNavLinkClass}>
                       Audit Log
                     </NavLink>
+                    <NavLink to="/admin/images" className={adminNavLinkClass}>
+  Cleanup Gambar
+</NavLink>
                   </>
                 )}
               </>
@@ -271,6 +274,13 @@ function Navbar() {
                         >
                           Audit Log
                         </NavLink>
+                        <NavLink
+  to="/admin/images"
+  onClick={closeMenu}
+  className={mobileAdminLinkClass}
+>
+  Cleanup Gambar
+</NavLink>
                       </>
                     )}
 
