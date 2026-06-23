@@ -9,6 +9,7 @@ function parseJsonField(value, fallback) {
     return fallback;
   }
 }
+
 function normalizeTextArray(value) {
   if (!value) return [];
 
@@ -47,7 +48,9 @@ function normalizeProductPayload(body) {
       brake: String(body.specs?.brake || "").trim(),
     }),
     source_page:
-      body.sourcePage === "" || body.sourcePage === null || body.sourcePage === undefined
+      body.sourcePage === "" ||
+      body.sourcePage === null ||
+      body.sourcePage === undefined
         ? null
         : Number(body.sourcePage),
     is_featured: body.isFeatured ? 1 : 0,
@@ -67,7 +70,10 @@ function validateProductPayload(product) {
 
   return "";
 }
+
 function mapProductRow(row) {
+  const totalStock = Number(row.total_stock || 0);
+
   return {
     id: row.id,
     brand: row.brand,
@@ -85,6 +91,10 @@ function mapProductRow(row) {
     isActive: Boolean(row.is_active),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+
+    totalStock,
+    isAvailable: totalStock > 0,
+    availabilityLabel: totalStock > 0 ? "Tersedia" : "Habis",
   };
 }
 
@@ -105,24 +115,33 @@ export async function onRequestGet(context) {
     const { results } = await env.DB.prepare(
       `
       SELECT
-        id,
-        brand,
-        model,
-        type,
-        features,
-        price,
-        image_url,
-        description,
-        specs,
-        colors,
-        color_images,
-        source_page,
-        is_featured,
-        is_active,
-        created_at,
-        updated_at
-      FROM products
-      ORDER BY updated_at DESC, brand ASC, model ASC
+        p.id,
+        p.brand,
+        p.model,
+        p.type,
+        p.features,
+        p.price,
+        p.image_url,
+        p.description,
+        p.specs,
+        p.colors,
+        p.color_images,
+        p.source_page,
+        p.is_featured,
+        p.is_active,
+        p.created_at,
+        p.updated_at,
+        COALESCE(stock.total_stock, 0) AS total_stock
+      FROM products p
+      LEFT JOIN (
+        SELECT
+          product_id,
+          SUM(quantity) AS total_stock
+        FROM product_stock
+        GROUP BY product_id
+      ) stock
+        ON stock.product_id = p.id
+      ORDER BY p.updated_at DESC, p.brand ASC, p.model ASC
       `,
     ).all();
 
@@ -141,6 +160,7 @@ export async function onRequestGet(context) {
     );
   }
 }
+
 export async function onRequestPost(context) {
   try {
     const { env, request } = context;
@@ -194,19 +214,19 @@ export async function onRequestPost(context) {
       `
       INSERT INTO products (
         id,
-brand,
-model,
-type,
-features,
-price,
-image_url,
-description,
-specs,
-colors,
-color_images,
-source_page,
-is_featured,
-is_active
+        brand,
+        model,
+        type,
+        features,
+        price,
+        image_url,
+        description,
+        specs,
+        colors,
+        color_images,
+        source_page,
+        is_featured,
+        is_active
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
     )
@@ -227,19 +247,21 @@ is_active
         product.is_active,
       )
       .run();
-await writeAdminLog(env, context.data?.adminUser, {
-  action: "product.create",
-  targetType: "product",
-  targetId: product.id,
-  targetLabel: `${product.brand} ${product.model}`,
-  metadata: {
-    brand: product.brand,
-    model: product.model,
-    type: product.type,
-    isActive: Boolean(product.is_active),
-    isFeatured: Boolean(product.is_featured),
-  },
-});
+
+    await writeAdminLog(env, context.data?.adminUser, {
+      action: "product.create",
+      targetType: "product",
+      targetId: product.id,
+      targetLabel: `${product.brand} ${product.model}`,
+      metadata: {
+        brand: product.brand,
+        model: product.model,
+        type: product.type,
+        isActive: Boolean(product.is_active),
+        isFeatured: Boolean(product.is_featured),
+      },
+    });
+
     return Response.json({
       ok: true,
       message: "Produk berhasil ditambahkan.",

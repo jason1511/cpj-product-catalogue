@@ -1,3 +1,10 @@
+const locationLabels = {
+  SBY: "Surabaya",
+  LBK: "Lombok",
+  PBL: "Probolinggo",
+  LMJ: "Lumajang",
+};
+
 async function hashPassword(password, secret) {
   const encoder = new TextEncoder();
   const data = encoder.encode(`${password}:${secret}`);
@@ -14,8 +21,15 @@ function bufferToHex(buffer) {
     .join("");
 }
 
+function getLocationName(locationCode) {
+  if (!locationCode) return "";
+
+  return locationLabels[locationCode] || locationCode;
+}
+
 async function createSignature(payload, secret) {
   const encoder = new TextEncoder();
+
   const key = await crypto.subtle.importKey(
     "raw",
     encoder.encode(secret),
@@ -41,6 +55,7 @@ async function createSessionValue(user, secret) {
     id: user.id,
     username: user.username,
     role: user.role,
+    locationCode: user.location_code || "",
     exp: Date.now() + 24 * 60 * 60 * 1000,
   };
 
@@ -90,7 +105,13 @@ export async function onRequestPost(context) {
 
     const user = await env.DB.prepare(
       `
-      SELECT id, username, password_hash, role, is_active
+      SELECT
+        id,
+        username,
+        password_hash,
+        role,
+        location_code,
+        is_active
       FROM admin_users
       WHERE username = ?
       LIMIT 1
@@ -109,6 +130,17 @@ export async function onRequestPost(context) {
       );
     }
 
+    if (user.role === "staff" && !user.location_code) {
+      return Response.json(
+        {
+          ok: false,
+          message:
+            "Akun staff belum memiliki lokasi. Hubungi admin untuk mengatur lokasi user.",
+        },
+        { status: 403 },
+      );
+    }
+
     const passwordHash = await hashPassword(password, env.ADMIN_SESSION_SECRET);
 
     if (passwordHash !== user.password_hash) {
@@ -122,17 +154,22 @@ export async function onRequestPost(context) {
     }
 
     const sessionValue = await createSessionValue(
-  user,
-  env.ADMIN_SESSION_SECRET,
-);
+      user,
+      env.ADMIN_SESSION_SECRET,
+    );
+
+    const locationCode = user.location_code || "";
 
     return Response.json(
       {
         ok: true,
         message: "Login berhasil.",
         user: {
+          id: user.id,
           username: user.username,
           role: user.role,
+          locationCode,
+          locationName: getLocationName(locationCode),
         },
       },
       {

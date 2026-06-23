@@ -1,5 +1,12 @@
 import { writeAdminLog } from "../../../../utils/audit";
 
+const locationLabels = {
+  SBY: "Surabaya",
+  LBK: "Lombok",
+  PBL: "Probolinggo",
+  LMJ: "Lumajang",
+};
+
 async function hashPassword(password, secret) {
   const encoder = new TextEncoder();
   const data = encoder.encode(`${password}:${secret}`);
@@ -8,6 +15,12 @@ async function hashPassword(password, secret) {
   const hashArray = [...new Uint8Array(hashBuffer)];
 
   return hashArray.map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function getLocationName(locationCode) {
+  if (!locationCode) return "";
+
+  return locationLabels[locationCode] || locationCode;
 }
 
 export async function onRequestPatch(context) {
@@ -50,7 +63,11 @@ export async function onRequestPatch(context) {
 
     const existingUser = await env.DB.prepare(
       `
-      SELECT id, username
+      SELECT
+        id,
+        username,
+        role,
+        location_code
       FROM admin_users
       WHERE id = ?
       LIMIT 1
@@ -82,16 +99,29 @@ export async function onRequestPatch(context) {
     )
       .bind(passwordHash, id)
       .run();
-await writeAdminLog(env, context.data?.adminUser, {
-  action: "user.password_reset",
-  targetType: "admin_user",
-  targetId: id,
-  targetLabel: existingUser.username,
-  metadata: {},
-});
+
+    await writeAdminLog(env, context.data?.adminUser, {
+      action: "user.password_reset",
+      targetType: "admin_user",
+      targetId: id,
+      targetLabel: existingUser.username,
+      metadata: {
+        role: existingUser.role,
+        locationCode: existingUser.location_code || "",
+        locationName: getLocationName(existingUser.location_code),
+      },
+    });
+
     return Response.json({
       ok: true,
       message: "Password user berhasil diperbarui.",
+      user: {
+        id: existingUser.id,
+        username: existingUser.username,
+        role: existingUser.role,
+        locationCode: existingUser.location_code || "",
+        locationName: getLocationName(existingUser.location_code),
+      },
     });
   } catch (error) {
     return Response.json(

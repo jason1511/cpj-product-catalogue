@@ -8,11 +8,13 @@ const actionLabels = {
   "product.deactivate": "Produk dinonaktifkan",
   "image.upload.main": "Gambar utama diupload",
   "image.upload.color": "Gambar warna diupload",
+  "user.update": "User diperbarui",
   "user.create": "User dibuat",
   "user.activate": "User diaktifkan",
   "user.deactivate": "User dinonaktifkan",
   "user.password_reset": "Password user direset",
   "image.cleanup.unused": "Cleanup gambar tidak terpakai",
+  "stock.update": "Stok diperbarui",
 };
 
 function formatDate(value) {
@@ -32,17 +34,19 @@ function formatValue(value) {
 
 function formatLogDetail(log) {
   const metadata = log.metadata || {};
-if (log.action === "image.cleanup.unused") {
-  const deletedCount = metadata.deletedKeys?.length || 0;
-  const skippedCount = metadata.skippedKeys?.length || 0;
 
-  return [
-    `${deletedCount} gambar tidak terpakai dihapus dari R2.`,
-    skippedCount > 0
-      ? `${skippedCount} gambar dilewati karena masih digunakan.`
-      : "Tidak ada gambar yang dilewati.",
-  ];
-}
+  if (log.action === "image.cleanup.unused") {
+    const deletedCount = metadata.deletedKeys?.length || 0;
+    const skippedCount = metadata.skippedKeys?.length || 0;
+
+    return [
+      `${deletedCount} gambar tidak terpakai dihapus dari R2.`,
+      skippedCount > 0
+        ? `${skippedCount} gambar dilewati karena masih digunakan.`
+        : "Tidak ada gambar yang dilewati.",
+    ];
+  }
+
   if (log.action === "product.update") {
     const changes = metadata.changes || [];
 
@@ -85,21 +89,85 @@ if (log.action === "image.cleanup.unused") {
   }
 
   if (log.action === "user.create") {
-    return [`User dibuat dengan role: ${metadata.role || "-"}`];
+    const details = [`User dibuat dengan role: ${metadata.role || "-"}`];
+
+    if (metadata.role === "staff") {
+      details.push(
+        `Lokasi staff: ${
+          metadata.locationName || metadata.locationCode || "-"
+        }`,
+      );
+    }
+
+    if (metadata.role === "admin") {
+      details.push("Admin dapat mengakses semua lokasi.");
+    }
+
+    return details;
+  }
+
+  if (log.action === "user.update") {
+    const changes = metadata.changes || [];
+
+    if (changes.length === 0) {
+      return ["Tidak ada perubahan user yang terdeteksi."];
+    }
+
+    return changes.map(
+      (change) =>
+        `${change.label} diubah dari "${formatValue(
+          change.before,
+        )}" menjadi "${formatValue(change.after)}"`,
+    );
   }
 
   if (log.action === "user.activate") {
-    return ["User diaktifkan."];
+    const details = ["User diaktifkan."];
+
+    if (metadata.locationName || metadata.locationCode) {
+      details.push(`Lokasi: ${metadata.locationName || metadata.locationCode}`);
+    }
+
+    return details;
   }
 
   if (log.action === "user.deactivate") {
-    return ["User dinonaktifkan."];
+    const details = ["User dinonaktifkan."];
+
+    if (metadata.locationName || metadata.locationCode) {
+      details.push(`Lokasi: ${metadata.locationName || metadata.locationCode}`);
+    }
+
+    return details;
   }
 
   if (log.action === "user.password_reset") {
-    return ["Password user direset."];
+    const details = ["Password user direset."];
+
+    if (metadata.role) {
+      details.push(`Role: ${metadata.role}`);
+    }
+
+    if (metadata.locationName || metadata.locationCode) {
+      details.push(`Lokasi: ${metadata.locationName || metadata.locationCode}`);
+    }
+
+    return details;
+  }
+  if (log.action === "stock.update") {
+  const changes = metadata.changes || [];
+
+  if (changes.length === 0) {
+    return ["Tidak ada perubahan stok yang terdeteksi."];
   }
 
+  return changes.map(
+    (change) =>
+      `${change.label} diubah dari "${formatValue(
+        change.before,
+      )}" menjadi "${formatValue(change.after)}"`,
+  );
+}
   return [JSON.stringify(metadata)];
 }
 

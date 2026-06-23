@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Container from "../components/Container";
 import AdminImageUploader from "../components/AdminImageUploader";
+import AdminProductStockEditor from "../components/AdminProductStockEditor";
 
 const fallbackDriveOptions = ["motor-listrik", "sepeda-listrik", "roda-tiga"];
 const fallbackFeatureOptions = ["pedal", "keranjang"];
@@ -561,6 +562,7 @@ function AdminProductEditPage() {
                   </label>
                 </div>
               </section>
+              <AdminProductStockEditor productId={formData.id} />
             </div>
 
             <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">

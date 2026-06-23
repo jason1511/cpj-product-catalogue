@@ -69,6 +69,30 @@ function Navbar() {
     setIsMenuOpen(false);
   }
 
+  function getAccountRoleLabel() {
+    if (!adminUser) return "";
+
+    if (adminUser.role === "admin") {
+      return "ADMIN";
+    }
+
+    return "STAFF";
+  }
+
+  function getAccountLocationLabel() {
+    if (!adminUser) return "";
+
+    if (adminUser.role === "admin") {
+      return "Semua Lokasi";
+    }
+
+    return (
+      adminUser.locationName ||
+      adminUser.locationCode ||
+      "Lokasi belum diset"
+    );
+  }
+
   async function handleLogout() {
     try {
       await fetch("/api/admin/logout", {
@@ -93,12 +117,12 @@ function Navbar() {
             className="group flex items-center gap-3"
           >
             <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-lg">
-  <img
-    src="/logo_cpj.png"
-    alt="Logo CV Chandra Putra Jaya"
-    className="h-full w-full object-contain"
-  />
-</div>
+              <img
+                src="/logo_cpj.png"
+                alt="Logo CV Chandra Putra Jaya"
+                className="h-full w-full object-contain"
+              />
+            </div>
 
             <div>
               <p className="text-sm font-black leading-tight text-slate-950">
@@ -142,9 +166,10 @@ function Navbar() {
                     <NavLink to="/admin/logs" className={adminNavLinkClass}>
                       Audit Log
                     </NavLink>
+
                     <NavLink to="/admin/images" className={adminNavLinkClass}>
-  Cleanup Gambar
-</NavLink>
+                      Cleanup Gambar
+                    </NavLink>
                   </>
                 )}
               </>
@@ -152,35 +177,41 @@ function Navbar() {
           </div>
 
           <div className="hidden items-center gap-3 md:flex">
-  {!adminUser && (
-    <NavLink
-      to="/contact"
-      className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-red-600/20 transition hover:-translate-y-0.5 hover:bg-red-700"
-    >
-      Hubungi Kami
-    </NavLink>
-  )}
+            {!adminUser && (
+              <NavLink
+                to="/contact"
+                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-red-600/20 transition hover:-translate-y-0.5 hover:bg-red-700"
+              >
+                Hubungi Kami
+              </NavLink>
+            )}
 
-  {adminUser && (
-    <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2">
-      <span className="text-xs font-bold text-slate-700">
-        {adminUser.username}
-      </span>
+            {adminUser && (
+              <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2">
+                <div className="leading-tight">
+                  <p className="text-xs font-black text-slate-800">
+                    {adminUser.username}
+                  </p>
 
-      <span className="rounded-full bg-red-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-red-600">
-        {adminUser.role}
-      </span>
+                  <p className="text-[10px] font-semibold text-slate-500">
+                    {getAccountLocationLabel()}
+                  </p>
+                </div>
 
-      <button
-        type="button"
-        onClick={handleLogout}
-        className="text-xs font-bold text-slate-500 transition hover:text-red-600"
-      >
-        Logout
-      </button>
-    </div>
-  )}
-</div>
+                <span className="rounded-full bg-red-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-red-600">
+                  {getAccountRoleLabel()}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="text-xs font-bold text-slate-500 transition hover:text-red-600"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
 
           <button
             type="button"
@@ -277,13 +308,14 @@ function Navbar() {
                         >
                           Audit Log
                         </NavLink>
+
                         <NavLink
-  to="/admin/images"
-  onClick={closeMenu}
-  className={mobileAdminLinkClass}
->
-  Cleanup Gambar
-</NavLink>
+                          to="/admin/images"
+                          onClick={closeMenu}
+                          className={mobileAdminLinkClass}
+                        >
+                          Cleanup Gambar
+                        </NavLink>
                       </>
                     )}
 
@@ -292,14 +324,23 @@ function Navbar() {
                         Login sebagai{" "}
                         <span className="font-bold text-slate-950">
                           {adminUser.username}
-                        </span>{" "}
-                        ({adminUser.role})
+                        </span>
                       </p>
+
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <span className="rounded-full bg-red-50 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-red-600">
+                          {getAccountRoleLabel()}
+                        </span>
+
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-bold text-slate-600">
+                          {getAccountLocationLabel()}
+                        </span>
+                      </div>
 
                       <button
                         type="button"
                         onClick={handleLogout}
-                        className="mt-2 text-sm font-bold text-red-600"
+                        className="mt-3 text-sm font-bold text-red-600"
                       >
                         Logout
                       </button>

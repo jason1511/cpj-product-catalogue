@@ -9,6 +9,8 @@ function parseJsonField(value, fallback) {
 }
 
 function mapProductRow(row) {
+  const totalStock = Number(row.total_stock || 0);
+
   return {
     id: row.id,
     brand: row.brand,
@@ -26,44 +28,59 @@ function mapProductRow(row) {
     isActive: Boolean(row.is_active),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+
+    totalStock,
+    isAvailable: totalStock > 0,
+    availabilityLabel: totalStock > 0 ? "Tersedia" : "Habis",
   };
 }
 
 export async function onRequestGet(context) {
   try {
     const { env } = context;
+
     if (!env.DB) {
-  return Response.json(
-    {
-      ok: false,
-      message: "D1 binding DB is not available.",
-      hint: "Check wrangler.toml or run wrangler pages dev dist --d1 DB=<>.",
-    },
-    { status: 500 },
-  );
-}
+      return Response.json(
+        {
+          ok: false,
+          message: "D1 binding DB is not available.",
+          hint: "Check wrangler.toml or run wrangler pages dev dist --d1 DB=<>.",
+        },
+        { status: 500 },
+      );
+    }
+
     const { results } = await env.DB.prepare(
       `
       SELECT
-        id,
-        brand,
-        model,
-        type,
-        features,
-        price,
-        image_url,
-        description,
-        specs,
-        colors,
-        color_images,
-        source_page,
-        is_featured,
-        is_active,
-        created_at,
-        updated_at
-      FROM products
-      WHERE is_active = 1
-      ORDER BY brand ASC, model ASC
+        p.id,
+        p.brand,
+        p.model,
+        p.type,
+        p.features,
+        p.price,
+        p.image_url,
+        p.description,
+        p.specs,
+        p.colors,
+        p.color_images,
+        p.source_page,
+        p.is_featured,
+        p.is_active,
+        p.created_at,
+        p.updated_at,
+        COALESCE(stock.total_stock, 0) AS total_stock
+      FROM products p
+      LEFT JOIN (
+        SELECT
+          product_id,
+          SUM(quantity) AS total_stock
+        FROM product_stock
+        GROUP BY product_id
+      ) stock
+        ON stock.product_id = p.id
+      WHERE p.is_active = 1
+      ORDER BY p.brand ASC, p.model ASC
       `,
     ).all();
 

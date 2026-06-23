@@ -7,18 +7,23 @@ const protectedApiPrefixes = [
   "/api/admin/logs",
   "/api/admin/images",
 ];
+
 const protectedPagePrefixes = ["/admin"];
+
 const adminOnlyPagePrefixes = [
   "/admin/users",
   "/admin/settings",
   "/admin/logs",
+  "/admin/images",
 ];
+
 const adminOnlyApiPrefixes = [
   "/api/admin/users",
   "/api/admin/settings",
   "/api/admin/logs",
   "/api/admin/images",
 ];
+
 function getCookie(request, name) {
   const cookieHeader = request.headers.get("Cookie") || "";
 
@@ -38,12 +43,14 @@ function isProtectedPath(pathname) {
     protectedPagePrefixes.some((prefix) => pathname.startsWith(prefix))
   );
 }
+
 function isAdminOnlyPath(pathname) {
   return (
     adminOnlyApiPrefixes.some((prefix) => pathname.startsWith(prefix)) ||
     adminOnlyPagePrefixes.some((prefix) => pathname.startsWith(prefix))
   );
 }
+
 function bufferToHex(buffer) {
   return [...new Uint8Array(buffer)]
     .map((byte) => byte.toString(16).padStart(2, "0"))
@@ -52,6 +59,7 @@ function bufferToHex(buffer) {
 
 async function createSignature(payload, secret) {
   const encoder = new TextEncoder();
+
   const key = await crypto.subtle.importKey(
     "raw",
     encoder.encode(secret),
@@ -72,6 +80,15 @@ async function createSignature(payload, secret) {
   return bufferToHex(signature);
 }
 
+function normalizeSessionUser(user) {
+  return {
+    id: user.id,
+    username: user.username,
+    role: user.role,
+    locationCode: user.locationCode || user.location_code || "",
+  };
+}
+
 async function verifySession(session, secret) {
   if (!session || !secret) return null;
 
@@ -89,7 +106,7 @@ async function verifySession(session, secret) {
     if (!user.exp || user.exp <= Date.now()) return null;
     if (!["admin", "staff"].includes(user.role)) return null;
 
-    return user;
+    return normalizeSessionUser(user);
   } catch {
     return null;
   }
@@ -106,25 +123,25 @@ export async function onRequest(context) {
   const session = getCookie(request, "cpj_admin_session");
   const user = await verifySession(session, context.env.ADMIN_SESSION_SECRET);
 
- if (user) {
-  context.data.adminUser = user;
+  if (user) {
+    context.data.adminUser = user;
 
-  if (isAdminOnlyPath(url.pathname) && user.role !== "admin") {
-    if (url.pathname.startsWith("/api/")) {
-      return Response.json(
-        {
-          ok: false,
-          message: "Akses admin diperlukan.",
-        },
-        { status: 403 },
-      );
+    if (isAdminOnlyPath(url.pathname) && user.role !== "admin") {
+      if (url.pathname.startsWith("/api/")) {
+        return Response.json(
+          {
+            ok: false,
+            message: "Akses admin diperlukan.",
+          },
+          { status: 403 },
+        );
+      }
+
+      return Response.redirect(`${url.origin}/admin/products`, 302);
     }
 
-    return Response.redirect(`${url.origin}/admin/products`, 302);
+    return next();
   }
-
-  return next();
-}
 
   if (url.pathname.startsWith("/api/")) {
     return Response.json(
