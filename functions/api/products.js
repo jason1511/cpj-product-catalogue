@@ -8,6 +8,15 @@ function parseJsonField(value, fallback) {
   }
 }
 
+function parseTextList(value) {
+  if (!value) return [];
+
+  return String(value)
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function mapProductRow(row) {
   const totalStock = Number(row.total_stock || 0);
 
@@ -32,6 +41,8 @@ function mapProductRow(row) {
     totalStock,
     isAvailable: totalStock > 0,
     availabilityLabel: totalStock > 0 ? "Tersedia" : "Habis",
+    availableLocations: parseTextList(row.available_locations),
+    availableLocationCodes: parseTextList(row.available_location_codes),
   };
 }
 
@@ -69,14 +80,21 @@ export async function onRequestGet(context) {
         p.is_active,
         p.created_at,
         p.updated_at,
-        COALESCE(stock.total_stock, 0) AS total_stock
+        COALESCE(stock.total_stock, 0) AS total_stock,
+        COALESCE(stock.available_locations, '') AS available_locations,
+        COALESCE(stock.available_location_codes, '') AS available_location_codes
       FROM products p
       LEFT JOIN (
         SELECT
-          product_id,
-          SUM(quantity) AS total_stock
-        FROM product_stock
-        GROUP BY product_id
+          ps.product_id,
+          SUM(ps.quantity) AS total_stock,
+          GROUP_CONCAT(l.name, ', ') AS available_locations,
+          GROUP_CONCAT(ps.location_code, ', ') AS available_location_codes
+        FROM product_stock ps
+        LEFT JOIN locations l
+          ON l.code = ps.location_code
+        WHERE ps.quantity > 0
+        GROUP BY ps.product_id
       ) stock
         ON stock.product_id = p.id
       WHERE p.is_active = 1

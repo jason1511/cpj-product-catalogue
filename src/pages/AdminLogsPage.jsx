@@ -15,6 +15,8 @@ const actionLabels = {
   "user.password_reset": "Password user direset",
   "image.cleanup.unused": "Cleanup gambar tidak terpakai",
   "stock.update": "Stok diperbarui",
+  "invoice.create": "Invoice dibuat",
+"invoice.status_update": "Status invoice diperbarui",
 };
 
 function formatDate(value) {
@@ -167,6 +169,26 @@ function formatLogDetail(log) {
         change.before,
       )}" menjadi "${formatValue(change.after)}"`,
   );
+}
+if (log.action === "invoice.create") {
+  return [
+    `Invoice ${metadata.invoiceNumber || "-"} dibuat.`,
+    `Lokasi: ${metadata.locationName || metadata.locationCode || "-"}`,
+    `Customer: ${metadata.customerName || "-"}`,
+    `Status: ${metadata.status || "-"}`,
+    `Jumlah item: ${metadata.itemCount || 0}`,
+    `Total: Rp ${Number(metadata.total || 0).toLocaleString("id-ID")}`,
+  ];
+}
+
+if (log.action === "invoice.status_update") {
+  return [
+    `Status invoice diubah dari "${
+      metadata.previousStatusLabel || metadata.previousStatus || "-"
+    }" menjadi "${metadata.statusLabel || metadata.status || "-"}".`,
+    `Lokasi: ${metadata.locationName || metadata.locationCode || "-"}`,
+    `Customer: ${metadata.customerName || "-"}`,
+  ];
 }
   return [JSON.stringify(metadata)];
 }

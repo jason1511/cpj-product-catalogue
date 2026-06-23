@@ -6,6 +6,7 @@ const protectedApiPrefixes = [
   "/api/admin/users",
   "/api/admin/logs",
   "/api/admin/images",
+  "/api/admin/invoices",
 ];
 
 const protectedPagePrefixes = ["/admin"];

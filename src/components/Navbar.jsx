@@ -72,11 +72,7 @@ function Navbar() {
   function getAccountRoleLabel() {
     if (!adminUser) return "";
 
-    if (adminUser.role === "admin") {
-      return "ADMIN";
-    }
-
-    return "STAFF";
+    return adminUser.role === "admin" ? "ADMIN" : "STAFF";
   }
 
   function getAccountLocationLabel() {
@@ -155,6 +151,10 @@ function Navbar() {
               <>
                 <NavLink to="/admin/products" className={adminNavLinkClass}>
                   Kelola Produk
+                </NavLink>
+
+                <NavLink to="/admin/invoices" className={adminNavLinkClass}>
+                  Invoice
                 </NavLink>
 
                 {adminUser.role === "admin" && (
@@ -269,18 +269,20 @@ function Navbar() {
                   Kontak
                 </NavLink>
 
-                <NavLink
-                  to="/contact"
-                  onClick={closeMenu}
-                  className="mt-2 rounded-xl bg-red-600 px-4 py-3 text-center font-bold text-white shadow-lg shadow-red-600/20 hover:bg-red-700"
-                >
-                  Hubungi Kami
-                </NavLink>
+                {!adminUser && (
+                  <NavLink
+                    to="/contact"
+                    onClick={closeMenu}
+                    className="mt-2 rounded-xl bg-red-600 px-4 py-3 text-center font-bold text-white shadow-lg shadow-red-600/20 hover:bg-red-700"
+                  >
+                    Hubungi Kami
+                  </NavLink>
+                )}
 
                 {adminUser && (
                   <div className="my-3 border-t border-slate-200 pt-3">
                     <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-400">
-                      Admin
+                      Dashboard
                     </p>
 
                     <NavLink
@@ -289,6 +291,14 @@ function Navbar() {
                       className={mobileAdminLinkClass}
                     >
                       Kelola Produk
+                    </NavLink>
+
+                    <NavLink
+                      to="/admin/invoices"
+                      onClick={closeMenu}
+                      className={mobileAdminLinkClass}
+                    >
+                      Invoice
                     </NavLink>
 
                     {adminUser.role === "admin" && (
