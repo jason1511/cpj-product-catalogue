@@ -50,24 +50,6 @@ export async function onRequestPost(context) {
         { status: 500 },
       );
     }
-try {
-  await writeAdminLog(env, context.data?.adminUser, {
-    action: colorName ? "image.upload.color" : "image.upload.main",
-    targetType: "product",
-    targetId: String(productId),
-    targetLabel: String(productId),
-    metadata: {
-      key,
-      imageUrl: `/api/images/${key}`,
-      colorName: String(colorName || ""),
-      originalName: file.name,
-      size: file.size,
-      type: file.type,
-    },
-  });
-} catch (auditError) {
-  console.error("Audit log failed for image upload:", auditError);
-}
     const formData = await request.formData();
     const file = formData.get("image");
     const productId = formData.get("productId");
@@ -124,6 +106,25 @@ try {
   colorName: String(colorName || ""),
 },
     });
+
+    try {
+      await writeAdminLog(env, context.data?.adminUser, {
+        action: colorName ? "image.upload.color" : "image.upload.main",
+        targetType: "product",
+        targetId: String(productId),
+        targetLabel: String(productId),
+        metadata: {
+          key,
+          imageUrl: `/api/images/${key}`,
+          colorName: String(colorName || ""),
+          originalName: file.name,
+          size: file.size,
+          type: file.type,
+        },
+      });
+    } catch (auditError) {
+      console.error("Audit log failed for image upload:", auditError);
+    }
 
     return Response.json({
       ok: true,
