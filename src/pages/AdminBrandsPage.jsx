@@ -44,7 +44,7 @@ export default function AdminBrandsPage() {
   return (
     <main className="py-8">
       <Container>
-        <Link to="/admin/products" className="text-sm font-semibold text-slate-500 hover:text-red-600">← Kembali ke Produk</Link>
+        <Link to="/admin" className="text-sm font-semibold text-slate-500 hover:text-red-600">← Kembali ke Dashboard</Link>
         <h1 className="mt-3 text-3xl font-black text-slate-950">Kelola Merek</h1>
         <section className="mt-6 max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <form onSubmit={addBrand} className="flex flex-col gap-3 sm:flex-row sm:items-end">

@@ -141,7 +141,7 @@ function AdminProductsPage() {
                 to="/admin"
                 className="rounded-xl border border-white/15 bg-white/10 px-5 py-3 text-center text-sm font-bold text-white backdrop-blur transition hover:-translate-y-0.5 hover:border-red-300 hover:bg-white/15"
               >
-                Dashboard
+                Kembali ke Dashboard
               </Link>
 
               <Link
