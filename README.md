@@ -289,7 +289,7 @@ Possible future improvements:
 ## Repository
 
 ```text
-https://github.com/YOUR_USERNAME/cpj-product-catalogue
+https://github.com/jason1511/cpj-product-catalogue
 ```
 
 Replace the URL above with the actual GitHub repository URL after pushing.
