@@ -314,46 +314,12 @@ function AdminProductEditPage() {
   }
 
   return (
-    <main className="py-10">
+    <main className="py-6">
       <Container>
-        <section className="relative overflow-hidden rounded-[2rem] bg-slate-950 p-8 text-white shadow-xl lg:p-10">
-          <div className="absolute -right-24 top-0 h-72 w-72 rounded-full bg-red-600/30 blur-3xl" />
-          <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-red-500/15 blur-3xl" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(239,68,68,0.2),transparent_38%)]" />
-
-          <div className="relative flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-            <div>
-              <p className="inline-flex rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-red-200 backdrop-blur">
-                Edit Produk
-              </p>
-
-              <h1 className="mt-6 text-4xl font-black tracking-tight text-white md:text-5xl">
-                Ubah Detail Produk
-              </h1>
-
-              <p className="mt-5 max-w-2xl text-base leading-8 text-slate-300">
-                Edit data produk yang tersimpan di database D1. Nanti perubahan
-                ini akan langsung memengaruhi katalog publik.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Link
-                to="/admin/products"
-                className="rounded-xl border border-white/15 bg-white/10 px-5 py-3 text-center text-sm font-bold text-white backdrop-blur transition hover:-translate-y-0.5 hover:border-red-300 hover:bg-white/15"
-              >
-                Kembali ke Produk
-              </Link>
-
-              <Link
-                to="/catalogue"
-                className="rounded-xl bg-red-600 px-5 py-3 text-center text-sm font-bold text-white shadow-lg shadow-red-600/25 transition hover:-translate-y-0.5 hover:bg-red-700"
-              >
-                Lihat Katalog
-              </Link>
-            </div>
-          </div>
-        </section>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div><Link to="/admin/products" className="text-sm font-semibold text-slate-500 hover:text-red-600">← Kembali ke Produk</Link><h1 className="mt-2 text-2xl font-black">Edit Produk</h1>{formData && <p className="mt-1 text-sm text-slate-500">{formData.brand} {formData.model} · {formData.id}</p>}</div>
+          {formData && <button type="submit" form="edit-product-form" disabled={isSaving} className="rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-60">{isSaving ? "Menyimpan..." : "Simpan Perubahan"}</button>}
+        </div>
 
         {isLoading && (
           <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm">
@@ -369,8 +335,9 @@ function AdminProductEditPage() {
 
         {!isLoading && formData && (
           <form
+            id="edit-product-form"
             onSubmit={handleSubmit}
-            className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.75fr]"
+            className="mt-5 grid items-start gap-4 lg:grid-cols-2"
           >
             <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-2xl font-black text-slate-950">
@@ -482,22 +449,23 @@ function AdminProductEditPage() {
                     onChange={(event) =>
                       updateField("description", event.target.value)
                     }
-                    rows={5}
+                    rows={3}
                     className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50"
                   />
                 </div>
               </div>
             </section>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
+              <details className="rounded-2xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer font-bold">Gambar Produk</summary>
               <AdminImageUploader
                 imageUrl={formData.image}
                 selectedFile={mainImageFile}
                 onFileSelected={setMainImageFile}
               />
 
-              <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-2xl font-black text-slate-950">
+              <div className="mt-3 rounded-xl border border-slate-200 p-4">
+                <h2 className="text-lg font-bold text-slate-950">
                   Gambar per Warna
                 </h2>
 
@@ -527,10 +495,10 @@ function AdminProductEditPage() {
                     </div>
                   )}
                 </div>
-              </section>
+              </div></details>
 
-              <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-2xl font-black text-slate-950">
+              <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <h2 className="text-lg font-bold text-slate-950">
                   Status Produk
                 </h2>
 
@@ -562,13 +530,11 @@ function AdminProductEditPage() {
                   </label>
                 </div>
               </section>
-              <AdminProductStockEditor productId={formData.id} />
+              <details className="rounded-2xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer font-bold">Stok per Lokasi</summary><div className="mt-3"><AdminProductStockEditor productId={formData.id} /></div></details>
             </div>
 
-            <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
-              <h2 className="text-2xl font-black text-slate-950">
-                Fitur, Warna, dan Spesifikasi
-              </h2>
+            <details open className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
+              <summary className="cursor-pointer text-lg font-bold">Fitur, Warna, dan Spesifikasi</summary>
 
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <div>
@@ -635,9 +601,6 @@ function AdminProductEditPage() {
                       placeholder={item.placeholder}
                       className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50"
                     />
-                    <p className="mt-2 text-xs text-slate-500">
-                      {item.helper}
-                    </p>
                   </div>
                 ))}
               </div>
@@ -658,7 +621,7 @@ function AdminProductEditPage() {
                   Batal
                 </Link>
               </div>
-            </section>
+            </details>
           </form>
         )}
       </Container>
