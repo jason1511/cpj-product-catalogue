@@ -15,11 +15,11 @@ function ProductDetailModal({ product, onClose }) {
   };
 
   const [selectedColor, setSelectedColor] = useState(
-    product?.colors?.[0] || "",
+    product?.selectedColor || product?.colors?.[0] || "",
   );
 
   useEffect(() => {
-    setSelectedColor(product?.colors?.[0] || "");
+    setSelectedColor(product?.selectedColor || product?.colors?.[0] || "");
   }, [product]);
 
   const selectedColorImage = selectedColor
