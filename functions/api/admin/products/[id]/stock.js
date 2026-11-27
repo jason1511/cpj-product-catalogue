@@ -261,6 +261,18 @@ export async function onRequestPut(context) {
       nextStock[location.code] = Math.floor(quantity);
     });
 
+    const { results: allocatedRows } = await env.DB.prepare(
+      "SELECT location_code, SUM(quantity) AS allocated FROM product_color_stock WHERE product_id = ? GROUP BY location_code",
+    ).bind(id).all();
+    for (const row of allocatedRows) {
+      if (Number(nextStock[row.location_code] || 0) < Number(row.allocated)) {
+        return Response.json(
+          { ok: false, message: "Total stok tidak boleh lebih kecil dari jumlah stok yang sudah ditentukan warnanya." },
+          { status: 400 },
+        );
+      }
+    }
+
     const changes = buildStockChanges(
       editableLocations,
       beforeStock,
