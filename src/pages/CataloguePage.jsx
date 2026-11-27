@@ -77,13 +77,6 @@ function CataloguePage() {
 
   const activeProducts = products.filter((product) => product.isActive);
 
-  const prices = activeProducts
-    .map((product) => product.price)
-    .filter((price) => typeof price === "number" && price > 0);
-
-  const lowestPrice = prices.length > 0 ? Math.min(...prices) : null;
-  const highestPrice = prices.length > 0 ? Math.max(...prices) : null;
-
   const selectedBrandLabel =
     selectedBrand === "all"
       ? null
@@ -197,12 +190,6 @@ function CataloguePage() {
     setSortBy("default");
   }
 
-  function formatPrice(price) {
-    if (typeof price !== "number") return "-";
-
-    return `Rp ${price.toLocaleString("id-ID")}`;
-  }
-
   return (
     <main className="py-10">
       <SEO
@@ -235,43 +222,7 @@ function CataloguePage() {
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <article className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur">
-                <p className="text-sm font-semibold text-slate-300">
-                  Total Produk
-                </p>
-                <p className="mt-2 text-3xl font-black text-white">
-                  {activeProducts.length}
-                </p>
-              </article>
 
-              <article className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur">
-                <p className="text-sm font-semibold text-slate-300">
-                  Merek Tersedia
-                </p>
-                <p className="mt-2 text-3xl font-black text-white">
-                  {brandOptions.length}
-                </p>
-              </article>
-
-              <article className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur">
-                <p className="text-sm font-semibold text-slate-300">
-                  Harga Mulai
-                </p>
-                <p className="mt-2 text-2xl font-black text-red-300">
-                  {formatPrice(lowestPrice)}
-                </p>
-              </article>
-
-              <article className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur">
-                <p className="text-sm font-semibold text-slate-300">
-                  Harga Tertinggi
-                </p>
-                <p className="mt-2 text-2xl font-black text-red-300">
-                  {formatPrice(highestPrice)}
-                </p>
-              </article>
-            </div>
           </div>
         </section>
 
