@@ -15,6 +15,13 @@ export async function onRequestGet({ env }) {
     } catch (error) {
       if (!String(error.message).includes("no such table")) throw error;
     }
+    let inactiveNames = [];
+    try {
+      inactiveNames = (await env.DB.prepare("SELECT name FROM catalogue_brand_visibility WHERE is_active = 0").all()).results.map((row) => row.name);
+    } catch (error) {
+      if (!String(error.message).includes("no such table")) throw error;
+    }
+    const inactive = new Set(inactiveNames.map((name) => name.toLowerCase()));
     const byName = new Map();
     for (const row of [...saved, ...products.results]) {
       const name = row.name.trim();
@@ -24,8 +31,9 @@ export async function onRequestGet({ env }) {
     const brands = [...byName.values()].sort((a, b) => a.localeCompare(b)).map((name) => ({
       name,
       logo: logoByName.get(name.toLowerCase()) || "",
+      isActive: !inactive.has(name.toLowerCase()),
     }));
-    return Response.json({ ok: true, brands });
+    return Response.json({ ok: true, brands, inactiveNames });
   } catch (error) {
     console.error(error);
     return Response.json({ ok: false, message: "Gagal memuat merek." }, { status: 500 });

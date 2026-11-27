@@ -102,9 +102,16 @@ export async function onRequestGet(context) {
       `,
     ).all();
 
+    let inactiveNames = [];
+    try {
+      inactiveNames = (await env.DB.prepare("SELECT name FROM catalogue_brand_visibility WHERE is_active = 0").all()).results;
+    } catch (error) {
+      if (!String(error.message).includes("no such table")) throw error;
+    }
+    const inactive = new Set(inactiveNames.map((row) => row.name.toLowerCase()));
     return Response.json({
       ok: true,
-      products: results.map(mapProductRow),
+      products: results.filter((row) => !inactive.has(String(row.brand || "").trim().toLowerCase())).map(mapProductRow),
     });
   } catch (error) {
     return Response.json(
