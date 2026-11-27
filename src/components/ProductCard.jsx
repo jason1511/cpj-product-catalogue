@@ -1,6 +1,19 @@
+import { useEffect, useState } from "react";
 import { createProductMessage, createWhatsAppLink } from "../utils/whatsapp";
 
 function ProductCard({ product, onViewDetails }) {
+  const [selectedColor, setSelectedColor] = useState("");
+  const colors = Array.isArray(product.colors) ? product.colors : [];
+  const displayImage = product.colorImages?.[selectedColor] || product.image;
+
+  useEffect(() => {
+    setSelectedColor("");
+  }, [product.id]);
+
+  function openDetails() {
+    onViewDetails?.({ ...product, selectedColor });
+  }
+
   const typeLabels = {
     "motor-listrik": "Motor Listrik",
     "sepeda-listrik": "Sepeda Listrik",
@@ -13,11 +26,17 @@ function ProductCard({ product, onViewDetails }) {
   };
 
   return (
-    <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-red-200 hover:shadow-xl">
+    <article className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-red-200 hover:shadow-xl">
+      <button
+        type="button"
+        onClick={openDetails}
+        aria-label={`Lihat detail ${product.brand} ${product.model}`}
+        className="absolute inset-0 z-10 cursor-pointer rounded-3xl focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-red-600"
+      />
       <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-white">
-        {product.image ? (
+        {displayImage ? (
           <img
-            src={product.image}
+            src={displayImage}
             alt={`${product.brand} ${product.model}`}
             className="h-full w-full object-contain p-4"
           />
@@ -66,7 +85,7 @@ function ProductCard({ product, onViewDetails }) {
                 href={createWhatsAppLink(createProductMessage(product))}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-2 inline-flex rounded-lg bg-emerald-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-emerald-700"
+                className="relative z-20 mt-2 inline-flex rounded-lg bg-emerald-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-emerald-700"
               >
                 Hubungi untuk harga
               </a>
@@ -129,10 +148,31 @@ function ProductCard({ product, onViewDetails }) {
           </div>
         )}
 
-        <div className="mt-5 flex gap-2">
+        {colors.length > 0 && (
+          <div className="relative z-20 mt-4" aria-label="Pilihan warna">
+            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Warna</p>
+            <div className="flex flex-wrap gap-2">
+              {colors.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  aria-pressed={selectedColor === color}
+                  onClick={() => setSelectedColor(color)}
+                  className={selectedColor === color
+                    ? "rounded-lg border border-red-600 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700"
+                    : "rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-red-400"}
+                >
+                  {color}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="relative z-20 mt-5 flex gap-2">
           <button
             type="button"
-            onClick={() => onViewDetails?.(product)}
+            onClick={openDetails}
             className="flex-1 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-slate-950/10 transition hover:-translate-y-0.5 hover:bg-red-600 hover:shadow-red-600/20"
           >
             Lihat Detail
