@@ -328,7 +328,7 @@ function AdminProductEditPage() {
     <main className="py-6">
       <Container>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div><Link to="/admin/products" className="text-sm font-semibold text-slate-500 hover:text-red-600">← Kembali ke Produk</Link><h1 className="mt-2 text-2xl font-black">Edit Produk</h1>{formData && <p className="mt-1 text-sm text-slate-500">{formData.brand} {formData.model} · {formData.id}</p>}</div>
+          <div><Link to="/admin" className="text-sm font-semibold text-slate-500 hover:text-red-600">← Kembali ke Dashboard</Link><h1 className="mt-2 text-2xl font-black">Edit Produk</h1>{formData && <p className="mt-1 text-sm text-slate-500">{formData.brand} {formData.model} · {formData.id}</p>}</div>
           {formData && <button type="submit" form="edit-product-form" disabled={isSaving} className="rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-60">{isSaving ? "Menyimpan..." : "Simpan Perubahan"}</button>}
         </div>
 
@@ -615,7 +615,7 @@ function AdminProductEditPage() {
                 </button>
 
                 <Link
-                  to="/admin/products"
+                  to="/admin"
                   className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-center text-sm font-bold text-slate-700 transition hover:-translate-y-0.5 hover:border-red-300 hover:text-red-600 hover:shadow-lg"
                 >
                   Batal

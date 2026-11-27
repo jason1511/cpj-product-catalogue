@@ -339,10 +339,10 @@ function AdminProductNewPage() {
             </div>
 
             <Link
-              to="/admin/products"
+              to="/admin"
               className="rounded-xl border border-white/15 bg-white/10 px-5 py-3 text-center text-sm font-bold text-white backdrop-blur transition hover:-translate-y-0.5 hover:border-red-300 hover:bg-white/15"
             >
-              Kembali ke Produk
+              Kembali ke Dashboard
             </Link>
           </div>
         </section>
@@ -621,7 +621,7 @@ function AdminProductNewPage() {
               </button>
 
               <Link
-                to="/admin/products"
+                to="/admin"
                 className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-center text-sm font-bold text-slate-700 transition hover:-translate-y-0.5 hover:border-red-300 hover:text-red-600 hover:shadow-lg"
               >
                 Batal
