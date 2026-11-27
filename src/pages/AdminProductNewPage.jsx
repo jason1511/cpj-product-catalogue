@@ -85,6 +85,7 @@ function AdminProductNewPage() {
   const navigate = useNavigate();
 
   const [existingProducts, setExistingProducts] = useState([]);
+  const [savedBrands, setSavedBrands] = useState([]);
   const [isIdManuallyEdited, setIsIdManuallyEdited] = useState(false);
 
   const [mainImageFile, setMainImageFile] = useState(null);
@@ -138,8 +139,17 @@ function AdminProductNewPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/admin/brands")
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("Gagal memuat merek.")))
+      .then((data) => { if (mounted && data.ok) setSavedBrands(data.brands); })
+      .catch((error) => console.error(error));
+    return () => { mounted = false; };
+  }, []);
+
   const brandOptions = [
-    ...new Set(existingProducts.map((product) => product.brand).filter(Boolean)),
+    ...new Set([...savedBrands, ...existingProducts.map((product) => product.brand), formData?.brand].filter(Boolean)),
   ];
 
   const driveOptions = [
@@ -357,18 +367,10 @@ function AdminProductNewPage() {
                 <label className="text-sm font-semibold text-slate-700">
                   Brand
                 </label>
-                <input
-                  type="text"
-                  list="brand-options"
-                  value={formData.brand}
-                  onChange={(event) => updateField("brand", event.target.value)}
-                  className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50"
-                />
-                <datalist id="brand-options">
-                  {brandOptions.map((brand) => (
-                    <option key={brand} value={brand} />
-                  ))}
-                </datalist>
+                <select aria-label="Brand" value={formData.brand} onChange={(event) => updateField("brand", event.target.value)} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+                  <option value="">Pilih merek</option>
+                  {brandOptions.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
+                </select>
               </div>
 
               <div>

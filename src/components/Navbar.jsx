@@ -15,6 +15,7 @@ const staffLinks = [
 ];
 
 const adminLinks = [
+  ["/admin/brands", "Kelola Merek"],
   ["/admin/users", "User Admin"],
   ["/admin/logs", "Audit Log"],
   ["/admin/images", "Cleanup Gambar"],
