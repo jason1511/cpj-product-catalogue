@@ -1,5 +1,6 @@
 const protectedApiPrefixes = [
   "/api/admin/products",
+  "/api/admin/brands",
   "/api/admin/uploads",
   "/api/admin/me",
   "/api/admin/logout",
@@ -12,6 +13,7 @@ const protectedApiPrefixes = [
 const protectedPagePrefixes = ["/admin"];
 
 const adminOnlyPagePrefixes = [
+  "/admin/brands",
   "/admin/users",
   "/admin/settings",
   "/admin/logs",

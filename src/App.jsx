@@ -19,6 +19,7 @@ import AdminProductsPage from "./pages/AdminProductsPage";
 import AdminProductEditPage from "./pages/AdminProductEditPage";
 import AdminProductNewPage from "./pages/AdminProductNewPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
+import AdminBrandsPage from "./pages/AdminBrandsPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 import AdminLogsPage from "./pages/AdminLogsPage";
 import AdminImageCleanupPage from "./pages/AdminImageCleanupPage";
@@ -56,6 +57,7 @@ function AnimatedRoutes() {
             element={<InvoiceStub />}
           />
 
+          <Route path="/admin/brands" element={<AdminBrandsPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/logs" element={<AdminLogsPage />} />
           <Route path="/admin/images" element={<AdminImageCleanupPage />} />

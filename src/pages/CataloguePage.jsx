@@ -73,7 +73,7 @@ function CataloguePage() {
     (category) => category.filterType === "feature",
   );
 
-  const brandOptions = [...new Set(products.map((product) => product.brand))];
+  const brandOptions = [...new Set(products.filter((product) => product.isActive).map((product) => product.brand).filter(Boolean))].sort((a, b) => a.localeCompare(b));
 
   const activeProducts = products.filter((product) => product.isActive);
 
