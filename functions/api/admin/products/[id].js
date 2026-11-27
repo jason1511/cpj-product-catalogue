@@ -354,6 +354,8 @@ export async function onRequestPut(context) {
 
     const body = await request.json();
     const product = normalizeProductPayload(body);
+    if (body.colors === undefined) product.colors = existingProduct.colors || "[]";
+    if (body.colorImages === undefined) product.color_images = existingProduct.color_images || "{}";
     const validationMessage = validateProductPayload(product);
 
     if (validationMessage) {
@@ -378,8 +380,8 @@ export async function onRequestPut(context) {
         image_url = ?,
         description = ?,
         specs = ?,
-        colors = ?,
-        color_images = ?,
+        colors = CASE WHEN ? IS NULL THEN colors ELSE ? END,
+        color_images = CASE WHEN ? IS NULL THEN color_images ELSE ? END,
         is_featured = ?,
         is_active = ?,
         updated_at = CURRENT_TIMESTAMP
@@ -395,7 +397,9 @@ export async function onRequestPut(context) {
         product.image_url,
         product.description,
         product.specs,
+        body.colors === undefined ? null : product.colors,
         product.colors,
+        body.colorImages === undefined ? null : product.color_images,
         product.color_images,
         product.is_featured,
         product.is_active,

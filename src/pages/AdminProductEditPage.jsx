@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Container from "../components/Container";
 import AdminImageUploader from "../components/AdminImageUploader";
+import AdminColorEditor from "../components/AdminColorEditor";
 import AdminProductStockEditor from "../components/AdminProductStockEditor";
 
 const fallbackDriveOptions = ["motor-listrik", "sepeda-listrik", "roda-tiga"];
@@ -68,13 +69,6 @@ function arrayToText(value) {
   return value.join(", ");
 }
 
-function textToArray(value) {
-  return String(value || "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
 function AdminProductEditPage() {
   const { id } = useParams();
 
@@ -82,7 +76,6 @@ function AdminProductEditPage() {
   const [formData, setFormData] = useState(null);
 
   const [mainImageFile, setMainImageFile] = useState(null);
-  const [colorImageFiles, setColorImageFiles] = useState({});
 
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -136,7 +129,6 @@ function AdminProductEditPage() {
           });
 
           setMainImageFile(null);
-          setColorImageFiles({});
         }
       } catch (error) {
         console.error(error);
@@ -176,21 +168,10 @@ function AdminProductEditPage() {
     ]),
   ];
 
-  const colorOptions = [
-    ...new Set(existingProducts.flatMap((product) => product.colors || [])),
-  ];
-
   function updateField(field, value) {
     setFormData((current) => ({
       ...current,
       [field]: value,
-    }));
-  }
-
-  function updateColorImageFile(color, file) {
-    setColorImageFiles((current) => ({
-      ...current,
-      [color]: file,
     }));
   }
 
@@ -246,18 +227,6 @@ function AdminProductEditPage() {
         });
       }
 
-      for (const [color, file] of Object.entries(colorImageFiles)) {
-        if (file) {
-          const uploadedUrl = await uploadProductImage({
-            file,
-            productId: formData.id,
-            colorName: color,
-          });
-
-          colorImages[color] = uploadedUrl;
-        }
-      }
-
       const payload = {
         brand: formData.brand,
         model: formData.model,
@@ -266,8 +235,6 @@ function AdminProductEditPage() {
         image: imageUrl,
         description: formData.description,
         features: formData.featuresText,
-        colors: formData.colorsText,
-        colorImages,
         specs: {
           battery: formData.battery,
           motor: formData.motor,
@@ -302,7 +269,6 @@ function AdminProductEditPage() {
       }));
 
       setMainImageFile(null);
-      setColorImageFiles({});
 
       alert("Produk berhasil diperbarui.");
     } catch (error) {
@@ -464,38 +430,7 @@ function AdminProductEditPage() {
                 onFileSelected={setMainImageFile}
               />
 
-              <div className="mt-3 rounded-xl border border-slate-200 p-4">
-                <h2 className="text-lg font-bold text-slate-950">
-                  Gambar per Warna
-                </h2>
-
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Gambar ini akan muncul saat pengunjung memilih warna tertentu
-                  di detail produk.
-                </p>
-
-                <div className="mt-5 space-y-4">
-                  {textToArray(formData.colorsText).length > 0 ? (
-                    textToArray(formData.colorsText).map((color) => (
-                      <AdminImageUploader
-                        key={color}
-                        imageUrl={formData.colorImages?.[color] || ""}
-                        selectedFile={colorImageFiles[color] || null}
-                        title={`Gambar ${color}`}
-                        description={`Pilih gambar khusus untuk warna ${color}. Gambar akan diupload saat produk disimpan.`}
-                        onFileSelected={(file) =>
-                          updateColorImageFile(color, file)
-                        }
-                      />
-                    ))
-                  ) : (
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600">
-                      Isi daftar warna terlebih dahulu, misalnya: Pink, Hijau,
-                      Biru.
-                    </div>
-                  )}
-                </div>
-              </div></details>
+              </details>
 
               <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <h2 className="text-lg font-bold text-slate-950">
@@ -530,7 +465,10 @@ function AdminProductEditPage() {
                   </label>
                 </div>
               </section>
-              <details className="rounded-2xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer font-bold">Stok per Lokasi</summary><div className="mt-3"><AdminProductStockEditor productId={formData.id} /></div></details>
+              <details className="rounded-2xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer font-bold">Ubah Total Stok per Lokasi</summary><div className="mt-3"><AdminProductStockEditor productId={formData.id} /></div></details>
+              <AdminColorEditor productId={formData.id} onChanged={(colors, colorImages) => {
+                setFormData((current) => ({ ...current, colorsText: arrayToText(colors), colorImages }));
+              }} />
             </div>
 
             <details open className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
@@ -559,31 +497,6 @@ function AdminProductEditPage() {
                   <p className="mt-2 text-xs text-slate-500">
                     Pisahkan lebih dari satu fitur dengan koma. Contoh:{" "}
                     <span className="font-semibold">pedal, keranjang</span>.
-                  </p>
-                </div>
-
-                <div>
-                  <label className="text-sm font-semibold text-slate-700">
-                    Warna
-                  </label>
-                  <input
-                    type="text"
-                    list="edit-color-options"
-                    value={formData.colorsText}
-                    onChange={(event) =>
-                      updateField("colorsText", event.target.value)
-                    }
-                    placeholder="Contoh: Merah, Hitam, Putih"
-                    className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium outline-none focus:border-red-400 focus:ring-4 focus:ring-red-50"
-                  />
-                  <datalist id="edit-color-options">
-                    {colorOptions.map((color) => (
-                      <option key={color} value={color} />
-                    ))}
-                  </datalist>
-                  <p className="mt-2 text-xs text-slate-500">
-                    Pisahkan warna dengan koma. Contoh:{" "}
-                    <span className="font-semibold">Merah, Hitam, Cream</span>.
                   </p>
                 </div>
 
