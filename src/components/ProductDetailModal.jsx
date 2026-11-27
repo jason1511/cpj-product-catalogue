@@ -28,18 +28,6 @@ function ProductDetailModal({ product, onClose }) {
 
   const displayImage = selectedColorImage || product?.image;
 
-  const isAvailable =
-    typeof product?.isAvailable === "boolean"
-      ? product.isAvailable
-      : Number(product?.totalStock || 0) > 0;
-
-  const availabilityLabel =
-    product?.availabilityLabel || (isAvailable ? "Tersedia" : "Habis");
-
-  const availableLocations = Array.isArray(product?.availableLocations)
-    ? product.availableLocations
-    : [];
-
   const specItems = [
     {
       label: "Baterai",
@@ -108,15 +96,7 @@ function ProductDetailModal({ product, onClose }) {
                     {typeLabels[product.type] || product.type}
                   </span>
 
-                  <span
-                    className={
-                      isAvailable
-                        ? "rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-200"
-                        : "rounded-full bg-red-400/10 px-3 py-1 text-xs font-bold text-red-200"
-                    }
-                  >
-                    {availabilityLabel}
-                  </span>
+
                 </div>
               </div>
 
@@ -187,61 +167,6 @@ function ProductDetailModal({ product, onClose }) {
                     Hubungi untuk harga
                   </a>
                 )}
-
-                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-black uppercase tracking-wide text-slate-500">
-                        Status Stok
-                      </p>
-
-                      <p
-                        className={
-                          isAvailable
-                            ? "mt-1 text-lg font-black text-emerald-700"
-                            : "mt-1 text-lg font-black text-slate-500"
-                        }
-                      >
-                        {availabilityLabel}
-                      </p>
-                    </div>
-
-                    <span
-                      className={
-                        isAvailable
-                          ? "rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700"
-                          : "rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700"
-                      }
-                    >
-                      {isAvailable ? "Stok tersedia" : "Stok kosong"}
-                    </span>
-                  </div>
-
-                  {isAvailable && availableLocations.length > 0 ? (
-                    <div className="mt-4">
-                      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                        Tersedia di lokasi
-                      </p>
-
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {availableLocations.map((location) => (
-                          <span
-                            key={location}
-                            className="rounded-full border border-emerald-100 bg-white px-3 py-1 text-xs font-bold text-emerald-700"
-                          >
-                            {location}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-sm leading-6 text-slate-600">
-                      Stok saat ini belum tersedia di lokasi manapun. Silakan
-                      hubungi tim kami untuk informasi restock atau alternatif
-                      model lain.
-                    </p>
-                  )}
-                </div>
 
                 {product.features?.length > 0 && (
                   <div className="mt-5 flex flex-wrap gap-2">
@@ -325,9 +250,7 @@ function ProductDetailModal({ product, onClose }) {
                     rel="noopener noreferrer"
                     className="rounded-xl bg-red-600 px-5 py-3 text-center text-sm font-bold text-white shadow-lg shadow-red-600/25 transition hover:-translate-y-0.5 hover:bg-red-700"
                   >
-                    {isAvailable
-                      ? "Tanya Produk Ini"
-                      : "Tanya Restock Produk Ini"}
+                    Tanya Produk Ini
                   </a>
 
                   <button

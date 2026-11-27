@@ -12,14 +12,6 @@ function ProductCard({ product, onViewDetails }) {
     pedal: "Dengan Pedal",
   };
 
-  const isAvailable =
-    typeof product.isAvailable === "boolean"
-      ? product.isAvailable
-      : Number(product.totalStock || 0) > 0;
-
-  const availabilityLabel =
-    product.availabilityLabel || (isAvailable ? "Tersedia" : "Habis");
-
   return (
     <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-red-200 hover:shadow-xl">
       <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-white">
@@ -86,15 +78,7 @@ function ProductCard({ product, onViewDetails }) {
               {typeLabels[product.type] || product.type}
             </span>
 
-            <span
-              className={
-                isAvailable
-                  ? "rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700"
-                  : "rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500"
-              }
-            >
-              {availabilityLabel}
-            </span>
+
           </div>
         </div>
 
@@ -160,7 +144,7 @@ function ProductCard({ product, onViewDetails }) {
             rel="noreferrer"
             className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:-translate-y-0.5 hover:border-red-300 hover:text-red-600 hover:shadow-lg"
           >
-            {isAvailable ? "Tanya" : "Tanya Restock"}
+            Tanya
           </a>
         </div>
       </div>

@@ -23,9 +23,9 @@ import AdminUsersPage from "./pages/AdminUsersPage";
 import AdminLogsPage from "./pages/AdminLogsPage";
 import AdminImageCleanupPage from "./pages/AdminImageCleanupPage";
 
-import AdminInvoicesPage from "./pages/AdminInvoicesPage";
-import AdminInvoiceNewPage from "./pages/AdminInvoiceNewPage";
-import AdminInvoiceDetailPage from "./pages/AdminInvoiceDetailPage";
+function InvoiceStub() {
+  return <main className="mx-auto max-w-7xl px-4 py-10"><h1 className="text-2xl font-bold">Invoice</h1><p className="mt-3 text-slate-600">Fitur invoice belum digunakan.</p></main>;
+}
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -49,11 +49,11 @@ function AnimatedRoutes() {
           />
           <Route path="/admin/products/new" element={<AdminProductNewPage />} />
 
-          <Route path="/admin/invoices" element={<AdminInvoicesPage />} />
-          <Route path="/admin/invoices/new" element={<AdminInvoiceNewPage />} />
+          <Route path="/admin/invoices" element={<InvoiceStub />} />
+          <Route path="/admin/invoices/new" element={<InvoiceStub />} />
           <Route
             path="/admin/invoices/:id"
-            element={<AdminInvoiceDetailPage />}
+            element={<InvoiceStub />}
           />
 
           <Route path="/admin/users" element={<AdminUsersPage />} />
