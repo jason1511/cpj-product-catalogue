@@ -4,18 +4,23 @@ import SectionHeader from "./SectionHeader";
 
 function BrandSection() {
   const [managedBrands, setManagedBrands] = useState([]);
+  const [inactiveNames, setInactiveNames] = useState([]);
 
   useEffect(() => {
     let active = true;
     fetch("/api/brands")
       .then((response) => response.ok ? response.json() : null)
       .then((data) => {
-        if (active && data?.ok) setManagedBrands(data.brands);
+        if (active && data?.ok) {
+          setManagedBrands(data.brands);
+          setInactiveNames(data.inactiveNames || []);
+        }
       })
       .catch((error) => console.error(error));
     return () => { active = false; };
   }, []);
 
+  const inactive = new Set(inactiveNames.map((name) => name.toLowerCase()));
   const names = new Set(defaultBrands.map((brand) => brand.name.toLowerCase()));
   const brands = [
     ...defaultBrands.map((brand) => ({
@@ -27,7 +32,7 @@ function BrandSection() {
       name: brand.name,
       logo: brand.logo,
     })),
-  ];
+  ].filter((brand) => !inactive.has(brand.name.toLowerCase()));
 
   return (
     <section className="relative mt-10 overflow-hidden rounded-[2rem] bg-slate-950 p-8 shadow-xl">

@@ -50,7 +50,7 @@ export default function AdminBrandsPage() {
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || "Gagal menambahkan merek.");
       createdName = data.name;
-      setBrands((current) => [...current, { name: createdName, logo: "" }].sort((a, b) => a.name.localeCompare(b.name)));
+      setBrands((current) => [...current, { name: createdName, logo: "", isActive: true }].sort((a, b) => a.name.localeCompare(b.name)));
       setName("");
       if (logo) {
         const imageUrl = await uploadLogo(createdName, logo);
@@ -82,6 +82,26 @@ export default function AdminBrandsPage() {
     }
   }
 
+  async function toggleBrand(brand) {
+    setSaving(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin/brands/status", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: brand.name, isActive: !brand.isActive }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || "Gagal mengubah status merek.");
+      setBrands((current) => current.map((item) => item.name === brand.name ? { ...item, isActive: data.isActive } : item));
+      setMessage(`Merek ${brand.name} berhasil ${data.isActive ? "diaktifkan" : "dinonaktifkan"}.`);
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <main className="py-8">
       <Container>
@@ -107,6 +127,10 @@ export default function AdminBrandsPage() {
                   {brand.logo ? <img src={brand.logo} alt="" className="h-full w-full object-contain" /> : <span className="text-xs font-bold text-slate-500">{brand.name.slice(0, 2).toUpperCase()}</span>}
                 </div>
                 <span className="min-w-0 flex-1 text-sm font-semibold">{brand.name}</span>
+                <span className="text-xs font-semibold text-slate-500">{brand.isActive === false ? "Nonaktif" : "Aktif"}</span>
+                <button type="button" disabled={saving} onClick={() => toggleBrand({ ...brand, isActive: brand.isActive !== false })} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-bold text-slate-700 hover:border-red-300 hover:text-red-600 disabled:opacity-50">
+                  {brand.isActive === false ? "Aktifkan" : "Nonaktifkan"}
+                </button>
                 <label className="cursor-pointer rounded-lg border border-slate-300 px-3 py-2 text-sm font-bold text-slate-700 hover:border-red-300 hover:text-red-600">
                   {brand.logo ? "Ganti Logo" : "Tambah Logo"}
                   <input aria-label={`Logo ${brand.name}`} type="file" accept="image/jpeg,image/png,image/webp" disabled={saving} onChange={(event) => updateLogo(brand, event.target.files?.[0], event.target)} className="sr-only" />
