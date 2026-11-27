@@ -79,7 +79,7 @@ function CataloguePage() {
 
   const prices = activeProducts
     .map((product) => product.price)
-    .filter((price) => typeof price === "number");
+    .filter((price) => typeof price === "number" && price > 0);
 
   const lowestPrice = prices.length > 0 ? Math.min(...prices) : null;
   const highestPrice = prices.length > 0 ? Math.max(...prices) : null;

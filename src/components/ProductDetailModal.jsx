@@ -173,14 +173,19 @@ function ProductDetailModal({ product, onClose }) {
                   {product.description}
                 </p>
 
-                {product.price ? (
+                {Number(product.price) > 0 ? (
                   <p className="mt-5 text-2xl font-bold text-red-600">
-                    Rp {product.price.toLocaleString("id-ID")}
+                    Rp {Number(product.price).toLocaleString("id-ID")}
                   </p>
                 ) : (
-                  <p className="mt-5 text-sm font-semibold text-slate-500">
-                    Harga akan disesuaikan dengan katalog terbaru.
-                  </p>
+                  <a
+                    href={createWhatsAppLink(createProductMessage(product))}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-5 inline-flex rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700"
+                  >
+                    Hubungi untuk harga
+                  </a>
                 )}
 
                 <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">

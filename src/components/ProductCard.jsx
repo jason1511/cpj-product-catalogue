@@ -65,14 +65,19 @@ function ProductCard({ product, onViewDetails }) {
               {product.model}
             </h3>
 
-            {product.price ? (
+            {Number(product.price) > 0 ? (
               <p className="mt-2 text-xl font-black text-red-600">
-                Rp {product.price.toLocaleString("id-ID")}
+                Rp {Number(product.price).toLocaleString("id-ID")}
               </p>
             ) : (
-              <p className="mt-2 text-sm font-bold text-slate-500">
-                Harga menyesuaikan katalog
-              </p>
+              <a
+                href={createWhatsAppLink(createProductMessage(product))}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 inline-flex rounded-lg bg-emerald-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-emerald-700"
+              >
+                Hubungi untuk harga
+              </a>
             )}
           </div>
 
